@@ -1,0 +1,83 @@
+from BaseClasses import ItemClassification
+
+from .. import data
+from ..items import MISSION_PASSES, UPGRADES
+from . import RS64TestBase
+
+
+def _location_count(world) -> int:
+    return len([loc for loc in world.multiworld.get_locations(world.player) if loc.address is not None])
+
+
+class TestDefaults(RS64TestBase):
+    def test_location_count(self) -> None:
+        # complete (19) + bronze + silver (38) + pickups (10)
+        pickups = sum(1 for m in data.MISSIONS if m["pickup"])
+        self.assertEqual(_location_count(self.world), 19 * 3 + pickups)
+
+    def test_items_fill_locations(self) -> None:
+        own = [i for i in self.multiworld.itempool if i.player == self.player]
+        self.assertEqual(len(own), _location_count(self.world))
+
+    def test_starting_missions_are_playable(self) -> None:
+        self.assertEqual(len(self.world.starting_missions), 2)
+        state = self.multiworld.state
+        for level in self.world.starting_missions:
+            region = self.multiworld.get_region(data.MISSIONS[level]["name"], self.player)
+            self.assertTrue(region.can_reach(state), data.MISSIONS[level]["name"])
+
+    def test_calamari_never_starts(self) -> None:
+        self.assertNotIn(15, self.world.starting_missions)
+
+    def test_bonus_never_starts_in_campaign_pool(self) -> None:
+        for level in self.world.starting_missions:
+            self.assertNotEqual(data.MISSIONS[level]["kind"], "bonus")
+
+    def test_upgrades_useful_without_gold(self) -> None:
+        item = self.world.create_item(UPGRADES[0])
+        self.assertEqual(item.classification, ItemClassification.useful)
+
+
+class TestMinimum(RS64TestBase):
+    options = {"medal_checks": "bronze", "upgrade_pickups": False, "starting_missions": 1}
+
+    def test_fits(self) -> None:
+        self.assertEqual(_location_count(self.world), 38)
+        own = [i for i in self.multiworld.itempool if i.player == self.player]
+        self.assertEqual(len(own), 38)
+        non_filler = [i for i in own if i.name in MISSION_PASSES or i.name in UPGRADES
+                      or i.name in self.world.item_name_groups["Ships"]]
+        self.assertLessEqual(len(non_filler), 34)
+
+
+class TestGold(RS64TestBase):
+    options = {"medal_checks": "gold", "upgrades_for_gold": 4}
+
+    def test_gold_needs_upgrades(self) -> None:
+        mission = data.MISSIONS[self.world.starting_missions[0]]
+        gold = f"{mission['name']} - Gold Medal"
+        self.assertFalse(self.can_reach_location(gold))
+        self.collect_by_name(UPGRADES[:3])
+        self.assertFalse(self.can_reach_location(gold))
+        self.collect_by_name(UPGRADES[3:4])
+        self.assertTrue(self.can_reach_location(gold))
+
+    def test_upgrades_progression(self) -> None:
+        self.assertEqual(self.world.create_item(UPGRADES[0]).classification, ItemClassification.progression)
+
+
+class TestMissionsGoal(RS64TestBase):
+    options = {"goal": "missions", "missions_required": 5, "starting_mission_pool": "any", "starting_missions": 3}
+
+    def test_events(self) -> None:
+        events = [loc for loc in self.multiworld.get_locations(self.player) if loc.address is None]
+        self.assertEqual(len(events), 19)
+
+
+class TestDeathLinkSlotData(RS64TestBase):
+    options = {"death_link": True}
+
+    def test_slot_data(self) -> None:
+        slot = self.world.fill_slot_data()
+        self.assertEqual(slot["death_link"], 1)
+        self.assertEqual(slot["world_version"], data.WORLD_VERSION)
