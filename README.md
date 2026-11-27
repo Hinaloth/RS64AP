@@ -65,6 +65,16 @@ cmake -S client -B build/client -A x64 -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/sc
 cmake --build build/client --config Release
 ```
 
+**Windows, cross-compiled from Linux (MinGW-w64)**: build OpenSSL 3 statically for `mingw64` first, then
+
+```sh
+cmake -S client -B build/win -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_TOOLCHAIN_FILE=$PWD/client/cmake/mingw-w64-x86_64.cmake -DOPENSSL_ROOT_DIR=<mingw OpenSSL prefix>
+cmake --build build/win
+```
+
+The DLL links its runtime statically and needs only Windows system DLLs.
+
 The mod folder is `build/client/rs64ap/`. `python tools/package.py --client build/client` zips it into `dist/`.
 
 Options: `-DRS64_RECOMP_DIR=<recomp checkout>` uses a local `host_api.h` instead of downloading it.
