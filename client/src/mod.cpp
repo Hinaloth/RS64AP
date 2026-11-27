@@ -399,6 +399,13 @@ void show_status(uint8_t* rdram, void* ctx, uint32_t slot, int y, const std::str
     *shown = text;
 }
 
+// The furthest mission the player holds a pass for: SELECT LEVEL lists entries 0..this.
+int furthest_pass() {
+    int far = -1;
+    for (int i = 0; i < d::kMissionCount; ++i) if (S.passes[i]) far = i;
+    return far;
+}
+
 const char* lock_reason(int level) {
     if (level < 0 || level >= d::kMissionCount) return nullptr;
     if (!S.passes[level]) return "NO MISSION PASS";
@@ -647,6 +654,12 @@ int on_mission_select_init(uint32_t, uint8_t* rdram, void* ctx, void*) {
     restore_medal_table(rdram);
     if (!active()) return RS64_HOOK_CONTINUE;
     enforce_menus(rdram);
+    // a2 = highest level the screen lists (from the pilot's progress as loaded, not the account we rewrite): list up
+    // to the furthest owned pass, as the co-op lobby does for its pick. Locked entries in between can't be confirmed.
+    const int far = furthest_pass();
+    const uint32_t asked = (uint32_t)regs(ctx)->r[kA2];
+    if (far >= 0 && asked < (uint32_t)far) regs(ctx)->r[kA2] = (uint64_t)far;
+    logf("mission select: game lists up to level %u, furthest pass %d", asked, far);
     std::string line = "probe craft masks consider/ignore:";
     for (int lv = 0; lv < d::kMissionCount; ++lv) {
         const uint32_t consider = call(rdram, ctx, a::kFnCraftMaskConsiderUnlocks, {(uint32_t)lv});
@@ -672,6 +685,9 @@ int on_mission_select_fonts(uint32_t, uint8_t*, void* ctx, void*) {
 
 int on_mission_select_tick(uint32_t, uint8_t* rdram, void* ctx, void*) {
     if (!active()) return RS64_HOOK_CONTINUE;
+    // Let the cursor reach every listed entry up to the furthest pass.
+    if (const int far = furthest_pass(); far >= 0)
+        ww(rdram, a::kMsUnlocked, rw(rdram, a::kMsUnlocked) | ((far >= 31) ? 0xFFFFFFFFu : ((2u << far) - 1u)));
     const int cursor = rb(rdram, a::kMsCursor);
     const char* why = lock_reason(cursor);
     if (why) {

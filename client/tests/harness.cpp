@@ -197,7 +197,14 @@ int main(int argc, char** argv) {
 
     // Mission select: the flown mission is owned, mission 0 is locked unless it was a starting mission.
     Regs ms{};
+    ms.r[kA2] = 0;  // a fresh pilot: the game lists only level 0
     fire(RS64_HOOK_MISSION_SELECT_INIT, &ms);
+    expect((uint32_t)ms.r[kA2] >= (uint32_t)level, "mission list raised to reach owned mission %d (a2=%u)", level,
+           (uint32_t)ms.r[kA2]);
+    ww(RAM, a::kMsUnlocked, 0x1u);
+    fire(RS64_HOOK_MISSION_SELECT_TICK, &ms);
+    expect((rw(RAM, a::kMsUnlocked) >> level) & 1u, "cursor can reach mission %d (mask 0x%X)", level, rw(RAM, a::kMsUnlocked));
+    ms.r[kA2] = 0;
     wb(RAM, a::kMsCursor, (uint8_t)level);
     ww(RAM, a::kPressedWords, 0x8000u);
     fire(RS64_HOOK_MISSION_SELECT_TICK, &ms);
