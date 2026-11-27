@@ -4,29 +4,29 @@ from typing import Any
 GAME: str = 'Star Wars Rogue Squadron'
 WORLD_VERSION: str = '0.1.0'
 ID_BASE: int = 640000
-VERIFIED: dict[str, bool] = {'allowed_ships': False, 'pickups': False, 'objectives': False}
+VERIFIED: dict[str, bool] = {'allowed_ships': True, 'pickups': False, 'objectives': False}
 MAX_OBJECTIVES: int = 10
 
 MISSIONS: list[dict[str, Any]] = [
-    {'id': 0, 'name': 'Ambush at Mos Eisley', 'kind': 'campaign', 'pickup': False, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 1, 'name': 'Rendezvous on Barkhesh', 'kind': 'campaign', 'pickup': False, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 2, 'name': 'The Search for the Nonnah', 'kind': 'campaign', 'pickup': True, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 3, 'name': 'Defection at Corellia', 'kind': 'campaign', 'pickup': True, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 4, 'name': 'Liberation of Gerrard V', 'kind': 'campaign', 'pickup': False, 'allowed_ships': ['V-wing'], 'objectives': None},
-    {'id': 5, 'name': 'The Jade Moon', 'kind': 'campaign', 'pickup': True, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 6, 'name': 'Imperial Construction Yards', 'kind': 'campaign', 'pickup': False, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 7, 'name': 'Assault on Kile II', 'kind': 'campaign', 'pickup': True, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 8, 'name': 'Rescue on Kessel', 'kind': 'campaign', 'pickup': False, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 9, 'name': 'Prisons of Kessel', 'kind': 'campaign', 'pickup': True, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 10, 'name': 'Battle Above Taloraan', 'kind': 'campaign', 'pickup': True, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 11, 'name': 'Escape from Fest', 'kind': 'campaign', 'pickup': True, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 12, 'name': 'Blockade on Chandrila', 'kind': 'campaign', 'pickup': True, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 13, 'name': 'Raid on Sullust', 'kind': 'campaign', 'pickup': True, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 14, 'name': "Moff Seerdon's Revenge", 'kind': 'campaign', 'pickup': True, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 15, 'name': 'The Battle of Calamari', 'kind': 'final', 'pickup': False, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 16, 'name': "Beggar's Canyon", 'kind': 'bonus', 'pickup': False, 'allowed_ships': ['T-16 Skyhopper'], 'objectives': None},
-    {'id': 17, 'name': 'The Death Star Trench Run', 'kind': 'bonus', 'pickup': False, 'allowed_ships': ['X-wing'], 'objectives': None},
-    {'id': 18, 'name': 'The Battle of Hoth', 'kind': 'bonus', 'pickup': False, 'allowed_ships': ['Snowspeeder'], 'objectives': None},
+    {'id': 0, 'name': 'Ambush at Mos Eisley', 'kind': 'campaign', 'pickup': False, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 1, 'name': 'Rendezvous on Barkhesh', 'kind': 'campaign', 'pickup': False, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 2, 'name': 'The Search for the Nonnah', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'A-wing', 'replay_ships': ['X-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 3, 'name': 'Defection at Corellia', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'Snowspeeder', 'replay_ships': []},
+    {'id': 4, 'name': 'Liberation of Gerrard V', 'kind': 'campaign', 'pickup': False, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 5, 'name': 'The Jade Moon', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 6, 'name': 'Imperial Construction Yards', 'kind': 'campaign', 'pickup': False, 'objectives': None, 'default_ship': 'Snowspeeder', 'replay_ships': []},
+    {'id': 7, 'name': 'Assault on Kile II', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'Y-wing', 'replay_ships': ['Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 8, 'name': 'Rescue on Kessel', 'kind': 'campaign', 'pickup': False, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': []},
+    {'id': 9, 'name': 'Prisons of Kessel', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 10, 'name': 'Battle Above Taloraan', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'A-wing', 'replay_ships': ['X-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 11, 'name': 'Escape from Fest', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'Snowspeeder', 'replay_ships': []},
+    {'id': 12, 'name': 'Blockade on Chandrila', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 13, 'name': 'Raid on Sullust', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'Y-wing', 'replay_ships': ['Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 14, 'name': "Moff Seerdon's Revenge", 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 15, 'name': 'The Battle of Calamari', 'kind': 'final', 'pickup': False, 'objectives': None, 'default_ship': 'V-wing', 'replay_ships': ['X-wing', 'A-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 16, 'name': "Beggar's Canyon", 'kind': 'bonus', 'pickup': False, 'objectives': None, 'default_ship': 'T-16 Skyhopper', 'replay_ships': []},
+    {'id': 17, 'name': 'The Death Star Trench Run', 'kind': 'bonus', 'pickup': False, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': []},
+    {'id': 18, 'name': 'The Battle of Hoth', 'kind': 'bonus', 'pickup': False, 'objectives': None, 'default_ship': 'Snowspeeder', 'replay_ships': []},
 ]
 
 SHIPS: list[dict[str, Any]] = [
@@ -56,7 +56,14 @@ FILLER: list[dict[str, Any]] = [
     {'index': 1, 'name': 'Extra Life', 'effect': 'life', 'weight': 3},
     {'index': 2, 'name': 'Secondary Refill', 'effect': 'secondary', 'weight': 2},
     {'index': 3, 'name': 'Hull Repair', 'effect': 'repair', 'weight': 1},
+    {'index': 4, 'name': 'Temporary Invincibility', 'effect': 'invincible', 'weight': 2},
 ]
+
+EXTRAS: list[dict[str, Any]] = [
+    {'index': 1, 'name': 'Replenishing Secondaries', 'effect': 'regen_secondary', 'classification': 'useful'},
+]
+
+LENIENCY: list[str] = ['Ambush at Mos Eisley Medal Leniency', 'Rendezvous on Barkhesh Medal Leniency', 'The Search for the Nonnah Medal Leniency', 'Defection at Corellia Medal Leniency', 'Liberation of Gerrard V Medal Leniency', 'The Jade Moon Medal Leniency', 'Imperial Construction Yards Medal Leniency', 'Assault on Kile II Medal Leniency', 'Rescue on Kessel Medal Leniency', 'Prisons of Kessel Medal Leniency', 'Battle Above Taloraan Medal Leniency', 'Escape from Fest Medal Leniency', 'Blockade on Chandrila Medal Leniency', 'Raid on Sullust Medal Leniency', "Moff Seerdon's Revenge Medal Leniency", 'The Battle of Calamari Medal Leniency', "Beggar's Canyon Medal Leniency", 'The Death Star Trench Run Medal Leniency', 'The Battle of Hoth Medal Leniency']
 
 ITEM_IDS: dict[str, int] = {
     'Ambush at Mos Eisley Pass': 640001,
@@ -98,6 +105,27 @@ ITEM_IDS: dict[str, int] = {
     'Extra Life': 640301,
     'Secondary Refill': 640302,
     'Hull Repair': 640303,
+    'Temporary Invincibility': 640304,
+    'Replenishing Secondaries': 640251,
+    'Ambush at Mos Eisley Medal Leniency': 640400,
+    'Rendezvous on Barkhesh Medal Leniency': 640401,
+    'The Search for the Nonnah Medal Leniency': 640402,
+    'Defection at Corellia Medal Leniency': 640403,
+    'Liberation of Gerrard V Medal Leniency': 640404,
+    'The Jade Moon Medal Leniency': 640405,
+    'Imperial Construction Yards Medal Leniency': 640406,
+    'Assault on Kile II Medal Leniency': 640407,
+    'Rescue on Kessel Medal Leniency': 640408,
+    'Prisons of Kessel Medal Leniency': 640409,
+    'Battle Above Taloraan Medal Leniency': 640410,
+    'Escape from Fest Medal Leniency': 640411,
+    'Blockade on Chandrila Medal Leniency': 640412,
+    'Raid on Sullust Medal Leniency': 640413,
+    "Moff Seerdon's Revenge Medal Leniency": 640414,
+    'The Battle of Calamari Medal Leniency': 640415,
+    "Beggar's Canyon Medal Leniency": 640416,
+    'The Death Star Trench Run Medal Leniency': 640417,
+    'The Battle of Hoth Medal Leniency': 640418,
 }
 
 LOCATION_IDS: dict[str, int] = {

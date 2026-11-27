@@ -113,6 +113,11 @@ if (MSVC)
     target_compile_options(rs64ap PRIVATE /Zc:__cplusplus /bigobj /utf-8)
     # Static CRT: the game loads mods with a restricted DLL search that won't find the CRT DLLs.
     set_property(TARGET rs64ap PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+elseif (MINGW)
+    target_compile_options(rs64ap PRIVATE -Wall -Wno-deprecated-declarations)
+    # Self-contained DLL: no libstdc++/libgcc/winpthread DLLs next to it. OpenSSL's static libs need these too.
+    target_link_options(rs64ap PRIVATE -static -static-libgcc -static-libstdc++)
+    target_link_libraries(rs64ap PRIVATE advapi32 user32 bcrypt)
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_compile_options(rs64ap PRIVATE -Wall -Wno-deprecated-declarations)
     # Export only what the game looks up, and keep the bundled libraries' symbols to ourselves.
@@ -122,7 +127,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 # The rest of the mod folder.
-foreach (f mod.json roguesq_menu.json)
+foreach (f mod.json roguesq_menu.json NOTICE.md)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${f}" "${RS64AP_OUT}/${f}" COPYONLY)
 endforeach()
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" "${RS64AP_OUT}/LICENSE.txt" COPYONLY)
@@ -135,4 +140,7 @@ if (RS64AP_BUILD_HARNESS)
     target_include_directories(rs64ap_harness PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${RS64_RECOMP_DIR}/include")
     target_link_libraries(rs64ap_harness PRIVATE ${CMAKE_DL_LIBS})
     add_dependencies(rs64ap_harness rs64ap)
+    if (MINGW)
+        target_link_options(rs64ap_harness PRIVATE -static)
+    endif()
 endif()

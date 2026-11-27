@@ -5,56 +5,364 @@
   "id_base": 640000,
   "verified": {
     "//": "false = provisional data waiting on a spike (docs/BIBLE.md section 11). The client's probe log (ROGUESQ AP probe lines) prints the real values.",
-    "allowed_ships": false,
+    "allowed_ships": true,
     "pickups": false,
-    "objectives": false
+    "objectives": false,
+    "//ships": "default_ship and replay_ships from play (2026-11-27). Hoth assumed Snowspeeder only. Whether replay ships can launch on a first visit is unverified (spike S3)."
   },
   "missions": [
-    { "id": 0,  "name": "Ambush at Mos Eisley",        "kind": "campaign", "pickup": false, "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 1,  "name": "Rendezvous on Barkhesh",      "kind": "campaign", "pickup": false, "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 2,  "name": "The Search for the Nonnah",   "kind": "campaign", "pickup": true,  "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 3,  "name": "Defection at Corellia",       "kind": "campaign", "pickup": true,  "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 4,  "name": "Liberation of Gerrard V",     "kind": "campaign", "pickup": false, "allowed_ships": ["V-wing"],         "objectives": null },
-    { "id": 5,  "name": "The Jade Moon",               "kind": "campaign", "pickup": true,  "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 6,  "name": "Imperial Construction Yards", "kind": "campaign", "pickup": false, "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 7,  "name": "Assault on Kile II",          "kind": "campaign", "pickup": true,  "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 8,  "name": "Rescue on Kessel",            "kind": "campaign", "pickup": false, "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 9,  "name": "Prisons of Kessel",           "kind": "campaign", "pickup": true,  "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 10, "name": "Battle Above Taloraan",       "kind": "campaign", "pickup": true,  "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 11, "name": "Escape from Fest",            "kind": "campaign", "pickup": true,  "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 12, "name": "Blockade on Chandrila",       "kind": "campaign", "pickup": true,  "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 13, "name": "Raid on Sullust",             "kind": "campaign", "pickup": true,  "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 14, "name": "Moff Seerdon's Revenge",      "kind": "campaign", "pickup": true,  "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 15, "name": "The Battle of Calamari",      "kind": "final",    "pickup": false, "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 16, "name": "Beggar's Canyon",             "kind": "bonus",    "pickup": false, "allowed_ships": ["T-16 Skyhopper"], "objectives": null },
-    { "id": 17, "name": "The Death Star Trench Run",   "kind": "bonus",    "pickup": false, "allowed_ships": ["X-wing"],         "objectives": null },
-    { "id": 18, "name": "The Battle of Hoth",          "kind": "bonus",    "pickup": false, "allowed_ships": ["Snowspeeder"],    "objectives": null }
+    {
+      "id": 0,
+      "name": "Ambush at Mos Eisley",
+      "kind": "campaign",
+      "pickup": false,
+      "objectives": null,
+      "default_ship": "X-wing",
+      "replay_ships": [
+        "A-wing",
+        "V-wing",
+        "Millennium Falcon",
+        "TIE Interceptor",
+        "Naboo N-1 Starfighter"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "Rendezvous on Barkhesh",
+      "kind": "campaign",
+      "pickup": false,
+      "objectives": null,
+      "default_ship": "X-wing",
+      "replay_ships": [
+        "A-wing",
+        "V-wing",
+        "Millennium Falcon",
+        "TIE Interceptor",
+        "Naboo N-1 Starfighter"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "The Search for the Nonnah",
+      "kind": "campaign",
+      "pickup": true,
+      "objectives": null,
+      "default_ship": "A-wing",
+      "replay_ships": [
+        "X-wing",
+        "V-wing",
+        "Millennium Falcon",
+        "TIE Interceptor",
+        "Naboo N-1 Starfighter"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Defection at Corellia",
+      "kind": "campaign",
+      "pickup": true,
+      "objectives": null,
+      "default_ship": "Snowspeeder",
+      "replay_ships": []
+    },
+    {
+      "id": 4,
+      "name": "Liberation of Gerrard V",
+      "kind": "campaign",
+      "pickup": false,
+      "objectives": null,
+      "default_ship": "X-wing",
+      "replay_ships": [
+        "A-wing",
+        "V-wing",
+        "Millennium Falcon",
+        "TIE Interceptor",
+        "Naboo N-1 Starfighter"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "The Jade Moon",
+      "kind": "campaign",
+      "pickup": true,
+      "objectives": null,
+      "default_ship": "X-wing",
+      "replay_ships": [
+        "A-wing",
+        "V-wing",
+        "Millennium Falcon",
+        "TIE Interceptor",
+        "Naboo N-1 Starfighter"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Imperial Construction Yards",
+      "kind": "campaign",
+      "pickup": false,
+      "objectives": null,
+      "default_ship": "Snowspeeder",
+      "replay_ships": []
+    },
+    {
+      "id": 7,
+      "name": "Assault on Kile II",
+      "kind": "campaign",
+      "pickup": true,
+      "objectives": null,
+      "default_ship": "Y-wing",
+      "replay_ships": [
+        "Millennium Falcon",
+        "TIE Interceptor",
+        "Naboo N-1 Starfighter"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Rescue on Kessel",
+      "kind": "campaign",
+      "pickup": false,
+      "objectives": null,
+      "default_ship": "X-wing",
+      "replay_ships": []
+    },
+    {
+      "id": 9,
+      "name": "Prisons of Kessel",
+      "kind": "campaign",
+      "pickup": true,
+      "objectives": null,
+      "default_ship": "X-wing",
+      "replay_ships": [
+        "A-wing",
+        "V-wing",
+        "Millennium Falcon",
+        "TIE Interceptor",
+        "Naboo N-1 Starfighter"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Battle Above Taloraan",
+      "kind": "campaign",
+      "pickup": true,
+      "objectives": null,
+      "default_ship": "A-wing",
+      "replay_ships": [
+        "X-wing",
+        "Millennium Falcon",
+        "TIE Interceptor",
+        "Naboo N-1 Starfighter"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "Escape from Fest",
+      "kind": "campaign",
+      "pickup": true,
+      "objectives": null,
+      "default_ship": "Snowspeeder",
+      "replay_ships": []
+    },
+    {
+      "id": 12,
+      "name": "Blockade on Chandrila",
+      "kind": "campaign",
+      "pickup": true,
+      "objectives": null,
+      "default_ship": "X-wing",
+      "replay_ships": [
+        "A-wing",
+        "V-wing",
+        "Millennium Falcon",
+        "TIE Interceptor",
+        "Naboo N-1 Starfighter"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "Raid on Sullust",
+      "kind": "campaign",
+      "pickup": true,
+      "objectives": null,
+      "default_ship": "Y-wing",
+      "replay_ships": [
+        "Millennium Falcon",
+        "TIE Interceptor",
+        "Naboo N-1 Starfighter"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "Moff Seerdon's Revenge",
+      "kind": "campaign",
+      "pickup": true,
+      "objectives": null,
+      "default_ship": "X-wing",
+      "replay_ships": [
+        "A-wing",
+        "V-wing",
+        "Millennium Falcon",
+        "TIE Interceptor",
+        "Naboo N-1 Starfighter"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "The Battle of Calamari",
+      "kind": "final",
+      "pickup": false,
+      "objectives": null,
+      "default_ship": "V-wing",
+      "replay_ships": [
+        "X-wing",
+        "A-wing",
+        "Millennium Falcon",
+        "TIE Interceptor",
+        "Naboo N-1 Starfighter"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "Beggar's Canyon",
+      "kind": "bonus",
+      "pickup": false,
+      "objectives": null,
+      "default_ship": "T-16 Skyhopper",
+      "replay_ships": []
+    },
+    {
+      "id": 17,
+      "name": "The Death Star Trench Run",
+      "kind": "bonus",
+      "pickup": false,
+      "objectives": null,
+      "default_ship": "X-wing",
+      "replay_ships": []
+    },
+    {
+      "id": 18,
+      "name": "The Battle of Hoth",
+      "kind": "bonus",
+      "pickup": false,
+      "objectives": null,
+      "default_ship": "Snowspeeder",
+      "replay_ships": []
+    }
   ],
   "ships": [
-    { "craft": 0, "name": "X-wing" },
-    { "craft": 1, "name": "Y-wing" },
-    { "craft": 2, "name": "A-wing" },
-    { "craft": 3, "name": "V-wing" },
-    { "craft": 4, "name": "Snowspeeder" },
-    { "craft": 5, "name": "Millennium Falcon" },
-    { "craft": 6, "name": "TIE Interceptor" },
-    { "craft": 7, "name": "T-16 Skyhopper" },
-    { "craft": 8, "name": "Naboo N-1 Starfighter" }
+    {
+      "craft": 0,
+      "name": "X-wing"
+    },
+    {
+      "craft": 1,
+      "name": "Y-wing"
+    },
+    {
+      "craft": 2,
+      "name": "A-wing"
+    },
+    {
+      "craft": 3,
+      "name": "V-wing"
+    },
+    {
+      "craft": 4,
+      "name": "Snowspeeder"
+    },
+    {
+      "craft": 5,
+      "name": "Millennium Falcon"
+    },
+    {
+      "craft": 6,
+      "name": "TIE Interceptor"
+    },
+    {
+      "craft": 7,
+      "name": "T-16 Skyhopper"
+    },
+    {
+      "craft": 8,
+      "name": "Naboo N-1 Starfighter"
+    }
   ],
   "upgrades": [
-    { "bit": 9,  "name": "Advanced Lasers" },
-    { "bit": 10, "name": "Advanced Concussion Missiles" },
-    { "bit": 11, "name": "Seeker Concussion Missiles" },
-    { "bit": 12, "name": "Advanced Proton Torpedoes" },
-    { "bit": 13, "name": "Seeker Proton Torpedoes" },
-    { "bit": 14, "name": "Seeker Cluster Missiles" },
-    { "bit": 15, "name": "Advanced Bombs" },
-    { "bit": 16, "name": "Advanced Shields" }
+    {
+      "bit": 9,
+      "name": "Advanced Lasers"
+    },
+    {
+      "bit": 10,
+      "name": "Advanced Concussion Missiles"
+    },
+    {
+      "bit": 11,
+      "name": "Seeker Concussion Missiles"
+    },
+    {
+      "bit": 12,
+      "name": "Advanced Proton Torpedoes"
+    },
+    {
+      "bit": 13,
+      "name": "Seeker Proton Torpedoes"
+    },
+    {
+      "bit": 14,
+      "name": "Seeker Cluster Missiles"
+    },
+    {
+      "bit": 15,
+      "name": "Advanced Bombs"
+    },
+    {
+      "bit": 16,
+      "name": "Advanced Shields"
+    }
   ],
   "filler": [
-    { "index": 1, "name": "Extra Life",       "effect": "life",      "weight": 3 },
-    { "index": 2, "name": "Secondary Refill", "effect": "secondary", "weight": 2 },
-    { "index": 3, "name": "Hull Repair",      "effect": "repair",    "weight": 1 }
+    {
+      "index": 1,
+      "name": "Extra Life",
+      "effect": "life",
+      "weight": 3
+    },
+    {
+      "index": 2,
+      "name": "Secondary Refill",
+      "effect": "secondary",
+      "weight": 2
+    },
+    {
+      "index": 3,
+      "name": "Hull Repair",
+      "effect": "repair",
+      "weight": 1
+    },
+    {
+      "index": 4,
+      "name": "Temporary Invincibility",
+      "effect": "invincible",
+      "weight": 2
+    }
   ],
-  "max_objectives_per_mission": 10
+  "max_objectives_per_mission": 10,
+  "extras": [
+    {
+      "index": 1,
+      "name": "Replenishing Secondaries",
+      "effect": "regen_secondary",
+      "classification": "useful",
+      "//": "+1 secondary every regen_seconds of mission time, up to the craft's max"
+    }
+  ],
+  "regen_seconds": 15,
+  "invincibility_seconds": 15,
+  "leniency": {
+    "//": "One filler item per mission: its medal requirements get easier at the debrief. Time limit x time_scale; kills, accuracy, friendlies x need_scale; bonuses unchanged.",
+    "time_scale": 1.5,
+    "need_scale": 0.6667
+  }
 }

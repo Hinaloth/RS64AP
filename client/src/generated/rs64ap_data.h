@@ -10,8 +10,12 @@ constexpr int64_t kIdBase = 640000;
 constexpr int kMissionCount = 19;
 constexpr int kShipCount = 9;
 constexpr int kUpgradeCount = 8;
-constexpr int kFillerCount = 3;
+constexpr int kFillerCount = 4;
 constexpr int kMaxObjectives = 10;
+constexpr float kRegenSeconds = 15.0f;
+constexpr float kInvincibilitySeconds = 15.0f;
+constexpr float kLeniencyTimeScale = 1.5f;
+constexpr float kLeniencyNeedScale = 0.6667f;
 
 // Location slots within a mission: id = kIdBase + level * 100 + slot.
 constexpr int kSlotComplete = 0;
@@ -24,12 +28,16 @@ constexpr int64_t pass_item(int level) { return kIdBase + level + 1; }
 constexpr int64_t ship_item(int craft) { return kIdBase + 101 + craft; }
 constexpr int64_t upgrade_item(int bit) { return kIdBase + 201 + bit - 9; }
 constexpr int64_t filler_item(int index) { return kIdBase + 300 + index; }
+constexpr int64_t extra_item(int index) { return kIdBase + 250 + index; }
+constexpr int64_t leniency_item(int level) { return kIdBase + 400 + level; }
+constexpr int kExtraReplenishingSecondaries = 1;
 
 // 0 campaign, 1 final (campaign), 2 bonus.
 constexpr int kMissionKind[kMissionCount] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2};
 constexpr bool kMissionPickup[kMissionCount] = {false, false, true, true, false, true, false, true, false, true, true, true, true, true, true, false, false, false, false};
-// Hangar mask bits (1 << craft) the apworld's logic assumes per mission.
-constexpr uint32_t kLogicShips[kMissionCount] = {0x1, 0x1, 0x1, 0x1, 0x8, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x80, 0x1, 0x10};
+// Hangar mask bits (1 << craft) per mission: the default ship, and the ships vanilla adds after a completion.
+constexpr uint32_t kDefaultShip[kMissionCount] = {0x1, 0x1, 0x4, 0x10, 0x1, 0x1, 0x10, 0x2, 0x1, 0x1, 0x4, 0x10, 0x1, 0x2, 0x1, 0x8, 0x80, 0x1, 0x10};
+constexpr uint32_t kReplayShips[kMissionCount] = {0x16c, 0x16c, 0x169, 0x0, 0x16c, 0x16c, 0x0, 0x160, 0x0, 0x16c, 0x161, 0x0, 0x16c, 0x160, 0x16c, 0x165, 0x0, 0x0, 0x0};
 constexpr const char* kMissionNames[kMissionCount] = {
     "Ambush at Mos Eisley",
     "Rendezvous on Barkhesh",
@@ -78,6 +86,7 @@ constexpr Filler kFiller[kFillerCount] = {
     {1, "Extra Life", "life"},
     {2, "Secondary Refill", "secondary"},
     {3, "Hull Repair", "repair"},
+    {4, "Temporary Invincibility", "invincible"},
 };
 
 }  // namespace rs64ap::data

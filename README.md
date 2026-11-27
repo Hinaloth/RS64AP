@@ -4,7 +4,9 @@ Archipelago Randomizer Implementation for RogueSquadron64Recomp
 An [Archipelago](https://archipelago.gg) multiworld randomizer for *Star Wars: Rogue Squadron* (N64), played on
 [RogueSquadron64Recomp](https://github.com/MikeSemicolonD/RogueSquadron64Recomp).
 
-- **Items:** 19 Mission Passes (campaign and bonus missions), 9 ships (Naboo N-1 and T-16 included), 8 upgrades, filler.
+- **Items:** 19 Mission Passes (campaign and bonus missions), 9 ships (Naboo N-1 and T-16 included), 8 upgrades,
+  Replenishing Secondaries, a Medal Leniency per mission, and filler (Extra Life, Secondary Refill, Hull Repair,
+  Temporary Invincibility).
 - **Checks:** mission completions, medals (bronze / silver / gold), hidden upgrade pickups, and later objectives.
 - **Goal:** finish The Battle of Calamari, or finish a set number of missions.
 
@@ -16,10 +18,10 @@ The full design and build plan is in [docs/BIBLE.md](docs/BIBLE.md).
 | --- | --- |
 | apworld | Complete for the current design. Tests pass on Archipelago 0.6.8+, including generation across every option combination. |
 | Client mod | Builds on Linux. Tested end to end against a real Archipelago server with a fake game (`tools/e2e.py`): connect, pilot binding, start items, unlock enforcement, mission/ship gating, completion/medal/pickup checks, reconnect. **Not run inside the recomp yet.** |
-| Game data | **Provisional.** Which ships each mission allows, the pickups and the objective counts still need checking in the game (spikes S1–S12 in the bible). The client logs `[rs64ap] probe ...` lines with the real values. |
+| Game data | Default and replay ships per mission come from play. Still open: whether replay ships can launch on a mission's first visit, the pickups and the objective counts (spikes in the bible). The client logs `[rs64ap] probe ...` lines with the real values. |
 
-Until spike S1 lands, logic assumes most missions need the X-wing (Gerrard V the V-wing, Beggar's Canyon the T-16,
-Hoth the Snowspeeder). The apworld warns about this when it generates.
+**Ship Logic** defaults to `default_only`: a mission needs its pass and its default ship. `any_listed` also accepts
+the ships vanilla allows on a replay. Turn it on once the game is confirmed to offer them on a first visit.
 
 ## Repository layout
 
@@ -64,6 +66,16 @@ vcpkg install openssl:x64-windows-static
 cmake -S client -B build/client -A x64 -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static
 cmake --build build/client --config Release
 ```
+
+**Windows, cross-compiled from Linux (MinGW-w64)**: build OpenSSL 3 statically for `mingw64` first, then
+
+```sh
+cmake -S client -B build/win -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_TOOLCHAIN_FILE=$PWD/client/cmake/mingw-w64-x86_64.cmake -DOPENSSL_ROOT_DIR=<mingw OpenSSL prefix>
+cmake --build build/win
+```
+
+The DLL links its runtime statically and needs only Windows system DLLs.
 
 The mod folder is `build/client/rs64ap/`. `python tools/package.py --client build/client` zips it into `dist/`.
 

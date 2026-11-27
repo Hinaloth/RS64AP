@@ -33,11 +33,12 @@ def package_apworld() -> Path:
     return out
 
 
-def package_client(build: Path) -> Path:
+def package_client(build: Path, platform_name: str | None) -> Path:
     folder = build / "rs64ap"
     if not (folder / "mod.json").exists():
         raise SystemExit(f"no mod folder at {folder}")
-    name = {"Windows": "windows", "Linux": "linux", "Darwin": "macos"}.get(platform.system(), platform.system().lower())
+    name = platform_name or {"Windows": "windows", "Linux": "linux", "Darwin": "macos"}.get(
+        platform.system(), platform.system().lower())
     out = DIST / f"rs64ap-client-{name}.zip"
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         for f in sorted(folder.iterdir()):
@@ -49,6 +50,7 @@ def package_client(build: Path) -> Path:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--client", type=Path, help="client build directory to zip")
+    ap.add_argument("--platform", help="platform name in the zip's file name (default: this machine's)")
     args = ap.parse_args()
 
     if subprocess.run([sys.executable, str(ROOT / "tools" / "gen_data.py"), "--check"]).returncode:
@@ -58,7 +60,7 @@ def main() -> int:
     shutil.copy(ROOT / "RS64AP.yaml", DIST / "RS64AP.yaml")
     print(DIST / "RS64AP.yaml")
     if args.client:
-        print(package_client(args.client))
+        print(package_client(args.client, args.platform))
     return 0
 
 

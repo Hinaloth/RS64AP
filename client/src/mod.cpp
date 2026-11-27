@@ -93,6 +93,8 @@ struct Session {
     uint32_t ships = 0;            // bit n = craft n
     uint32_t upgrades = 0;         // bits of kUpgradeMask
     bool naboo = false;
+    bool regen = false;            // Replenishing Secondaries
+    bool leniency[d::kMissionCount] = {};
 
     // From the server
     bool connected = false;
@@ -100,6 +102,7 @@ struct Session {
     int goal = 0;
     int missions_required = 19;
     int medal_checks = 3;
+    int ship_logic = 0;            // 0 default ship only, 1 any listed ship
     bool objective_checks = false;
     bool death_link = false;
 
@@ -122,6 +125,14 @@ struct Session {
     int message_cool = 0;
     int deathlink_grace = 0;
     std::deque<std::string> deathlinks;
+    float regen_next = 0.0f;       // mission_seconds() of the next +1 secondary
+    float invincible_until = 0.0f; // mission_seconds(); 0 = off
+    bool forcing_damage = false;   // our own DeathLink hit passes through invincibility
+
+    // Medal Leniency: the debrief after this level reads an eased copy of the medal table
+    int leniency_pending = -1;
+    uint32_t medal_buf = 0;
+    uint32_t medal_saved_ptr = 0;
     std::deque<std::string> mission_messages;
     std::string last_message;
 } S;
@@ -135,6 +146,9 @@ std::string item_name(int64_t id) {
     for (int i = 0; i < d::kShipCount; ++i) if (d::ship_item(i) == id) return d::kShipNames[i];
     for (int i = 0; i < d::kUpgradeCount; ++i) if (d::upgrade_item(9 + i) == id) return d::kUpgradeNames[i];
     for (const auto& f : d::kFiller) if (d::filler_item(f.index) == id) return f.name;
+    if (id == d::extra_item(d::kExtraReplenishingSecondaries)) return "Replenishing Secondaries";
+    for (int i = 0; i < d::kMissionCount; ++i)
+        if (d::leniency_item(i) == id) return std::string(d::kMissionNames[i]) + " Medal Leniency";
     return "Unknown item";
 }
 
@@ -147,7 +161,11 @@ void rebuild_state() {
     std::fill(std::begin(S.passes), std::end(S.passes), false);
     S.ships = 0;
     S.upgrades = 0;
+    S.regen = false;
+    std::fill(std::begin(S.leniency), std::end(S.leniency), false);
     for (int64_t id : S.file.items) {
+        if (id == d::extra_item(d::kExtraReplenishingSecondaries)) S.regen = true;
+        for (int i = 0; i < d::kMissionCount; ++i) if (d::leniency_item(i) == id) S.leniency[i] = true;
         for (int i = 0; i < d::kMissionCount; ++i) if (d::pass_item(i) == id) S.passes[i] = true;
         for (int i = 0; i < d::kShipCount; ++i) if (d::ship_item(i) == id) S.ships |= 1u << i;
         for (int b = 9; b < 9 + d::kUpgradeCount; ++b) if (d::upgrade_item(b) == id) S.upgrades |= 1u << b;
@@ -293,6 +311,7 @@ void on_connected(ConnectedInfo info) {
     S.goal = sd.value("goal", 0);
     S.missions_required = sd.value("missions_required", 19);
     S.medal_checks = sd.value("medal_checks", 3);
+    S.ship_logic = sd.value("ship_logic", 0);
     S.objective_checks = sd.value("objective_checks", 0) != 0;
     S.death_link = sd.value("death_link", 0) != 0;
     if (S.death_link) g_net.enable_deathlink_tag();
@@ -383,12 +402,17 @@ void show_status(uint8_t* rdram, void* ctx, uint32_t slot, int y, const std::str
 const char* lock_reason(int level) {
     if (level < 0 || level >= d::kMissionCount) return nullptr;
     if (!S.passes[level]) return "NO MISSION PASS";
-    const uint32_t mask = S.level_mask[level] ? S.level_mask[level] : d::kLogicShips[level];
+    // The game's own hangar list for the level when known, else the data table under the seed's Ship Logic.
+    const uint32_t table = d::kDefaultShip[level] | (S.ship_logic == 1 ? d::kReplayShips[level] : 0u);
+    const uint32_t mask = S.level_mask[level] ? S.level_mask[level] : table;
     if (!(mask & S.ships)) return "NO SHIP FOR THIS MISSION";
     return nullptr;
 }
 
 // ---- hooks -----------------------------------------------------------------------------------------------------
+
+void apply_leniency(uint8_t* rdram, int level);
+void restore_medal_table(uint8_t* rdram);
 
 int on_frame(uint32_t, uint8_t*, void*, void*) {
     pump();
@@ -398,6 +422,11 @@ int on_frame(uint32_t, uint8_t*, void*, void*) {
 int on_menu_frame(uint32_t, uint8_t* rdram, void*, void*) {
     if (!active()) return RS64_HOOK_CONTINUE;
     enforce_menus(rdram);
+    // First front-end frame after the mission: the menu overlay (and its medal table) is in, the debrief not yet scored.
+    if (S.leniency_pending >= 0) {
+        apply_leniency(rdram, S.leniency_pending);
+        S.leniency_pending = -1;
+    }
     if (--S.medal_scan_cool <= 0) {
         S.medal_scan_cool = 30;
         if (S.last_played >= 0) scan_medals(rdram, S.last_played);
@@ -407,6 +436,7 @@ int on_menu_frame(uint32_t, uint8_t* rdram, void*, void*) {
 }
 
 int on_mission_init(uint32_t, uint8_t* rdram, void*, void*) {
+    restore_medal_table(rdram);
     S.level = rb(rdram, a::kCurrentLevel);
     S.in_mission = false;
     S.pending_complete = false;
@@ -425,6 +455,8 @@ int on_mission_ready(uint32_t, uint8_t* rdram, void*, void*) {
     S.lives_seen = rb(rdram, a::kLives);
     S.filler_cool = 90;
     S.deathlink_grace = 0;
+    S.regen_next = g_api->mission_seconds() + d::kRegenSeconds;
+    S.invincible_until = 0.0f;
     logf("probe mission level=%d objectives=%u flags=0x%02X hidden=0x%02X lives=%u", S.level,
          rb(rdram, a::kObjectiveCount), S.objectives_seen, rb(rdram, a::kObjectivesHidden), S.lives_seen);
     return RS64_HOOK_CONTINUE;
@@ -442,6 +474,10 @@ void apply_filler(uint8_t* rdram, int64_t id) {
         wb(rdram, a::kSecondary, rb(rdram, a::kSecondaryMax));
     } else if (effect == "repair") {
         wf(rdram, a::kPlayerHealth, rf(rdram, a::kPlayerHealthMax));
+    } else if (effect == "invincible") {
+        S.invincible_until = g_api->mission_seconds() + d::kInvincibilitySeconds;
+        message("Invincible for " + std::to_string((int)d::kInvincibilitySeconds) + " seconds");
+        return;
     }
     message(std::string(f->name) + " applied");
 }
@@ -476,12 +512,27 @@ int on_mission_frame(uint32_t, uint8_t* rdram, void* ctx, void*) {
 
     if (!calm) return RS64_HOOK_CONTINUE;
 
+    const float now = g_api->mission_seconds();
+    // Replenishing Secondaries: +1 every kRegenSeconds of mission time, up to the craft's max (0xFF = unlimited).
+    if (S.regen && now >= S.regen_next) {
+        S.regen_next = now + d::kRegenSeconds;
+        const uint8_t count = rb(rdram, a::kSecondary), max = rb(rdram, a::kSecondaryMax);
+        if (count != 0xFF && count < max) wb(rdram, a::kSecondary, (uint8_t)(count + 1));
+    }
+    if (S.invincible_until > 0.0f && now >= S.invincible_until) {
+        S.invincible_until = 0.0f;
+        message("Invincibility ended");
+    }
+
     // DeathLink in
     if (!S.deathlinks.empty() && S.deathlink_grace == 0) {
         message("DeathLink: " + S.deathlinks.front());
         S.deathlinks.pop_front();
         wf(rdram, a::kPlayerSpawnShield, 0.0f);
+        S.invincible_until = 0.0f;
+        S.forcing_damage = true;
         call(rdram, ctx, a::kFnApplyPlayerCraftDamage, {a::kPlayerCraft, float_bits(1.0e6f)});
+        S.forcing_damage = false;
         S.deathlink_grace = 150;
     }
 
@@ -507,6 +558,57 @@ int on_mission_frame(uint32_t, uint8_t* rdram, void* ctx, void*) {
     return RS64_HOOK_CONTINUE;
 }
 
+// Temporary Invincibility: player 1's damage becomes 0 while the timer runs.
+int on_player_damage(uint32_t, uint8_t*, void* ctx, void*) {
+    if (S.forcing_damage || S.invincible_until <= 0.0f || !S.in_mission) return RS64_HOOK_CONTINUE;
+    if ((uint32_t)regs(ctx)->r[kA0] != a::kPlayerCraft) return RS64_HOOK_CONTINUE;
+    if (g_api->mission_seconds() < S.invincible_until) regs(ctx)->r[kA1] = 0;  // float bits of 0.0f
+    return RS64_HOOK_CONTINUE;
+}
+
+// Medal Leniency. The debrief (postLevelStatScreen, menu overlay) reads medal requirements through the pointer at
+// kMedalInfoPtr: 0x24 bytes per level, three 0xC records (bronze, silver, gold) of big-endian f32 minutes (at most),
+// then u16 kills, accuracy %, friendlies, bonuses (at least). The whole table is copied, the level's three records
+// eased, and the pointer aimed at the copy until the next mission select or mission. Bonuses are left as they are.
+uint16_t rh(const uint8_t* rdram, uint32_t at) { return (uint16_t)((rb(rdram, at) << 8) | rb(rdram, at + 1)); }
+void wh(uint8_t* rdram, uint32_t at, uint16_t v) { wb(rdram, at, (uint8_t)(v >> 8)); wb(rdram, at + 1, (uint8_t)v); }
+
+void apply_leniency(uint8_t* rdram, int level) {
+    const uint32_t table = rw(rdram, a::kMedalInfoPtr);
+    if (table < 0x80000000u || table >= 0x80800000u) {
+        logf("leniency: medal table pointer 0x%08X looks wrong, skipped", table);
+        return;
+    }
+    const uint32_t size = a::kMedalLevelStride * d::kMissionCount;
+    if (!S.medal_buf) S.medal_buf = g_api->alloc(rdram, size);
+    if (!S.medal_buf) return;
+    for (uint32_t i = 0; i < size; ++i) wb(rdram, S.medal_buf + i, rb(rdram, table + i));
+    std::string log = "probe leniency level=" + std::to_string(level);
+    for (uint32_t tier = 0; tier < 3; ++tier) {
+        const uint32_t rec = S.medal_buf + (uint32_t)level * a::kMedalLevelStride + tier * 0xCu;
+        const float minutes = rf(rdram, rec) * d::kLeniencyTimeScale;
+        wf(rdram, rec, minutes);
+        char part[96];
+        uint16_t eased[3];
+        for (uint32_t k = 0; k < 3; ++k) {
+            eased[k] = (uint16_t)(rh(rdram, rec + 4 + 2 * k) * d::kLeniencyNeedScale);
+            wh(rdram, rec + 4 + 2 * k, eased[k]);
+        }
+        std::snprintf(part, sizeof part, " [%.1fmin kills %u acc %u friendlies %u]", minutes, eased[0], eased[1], eased[2]);
+        log += part;
+    }
+    ww(rdram, a::kMedalInfoPtr, S.medal_buf);
+    S.medal_saved_ptr = table;
+    logf("%s", log.c_str());
+}
+
+void restore_medal_table(uint8_t* rdram) {
+    if (!S.medal_saved_ptr) return;
+    // A reloaded menu overlay already brings the original pointer back: only undo our own.
+    if (rw(rdram, a::kMedalInfoPtr) == S.medal_buf) ww(rdram, a::kMedalInfoPtr, S.medal_saved_ptr);
+    S.medal_saved_ptr = 0;
+}
+
 int on_result_success(uint32_t, uint8_t*, void*, void*) {
     if (active() && owned_level(S.level)) S.pending_complete = true;
     return RS64_HOOK_CONTINUE;
@@ -518,6 +620,8 @@ int on_result_fail(uint32_t, uint8_t*, void*, void*) {
 }
 
 int on_mission_end(uint32_t, uint8_t*, void*, void*) {
+    if (active() && owned_level(S.level) && S.leniency[S.level]) S.leniency_pending = S.level;
+    S.invincible_until = 0.0f;
     if (S.pending_complete && active()) {
         queue_location(d::location_id(S.level, d::kSlotComplete));
         logf("mission %d complete", S.level);
@@ -540,6 +644,7 @@ int on_powerup_collect(uint32_t, uint8_t* rdram, void* ctx, void*) {
 }
 
 int on_mission_select_init(uint32_t, uint8_t* rdram, void* ctx, void*) {
+    restore_medal_table(rdram);
     if (!active()) return RS64_HOOK_CONTINUE;
     enforce_menus(rdram);
     std::string line = "probe craft masks consider/ignore:";
@@ -709,6 +814,7 @@ MOD_EXPORT void rs64_mod_init(uint8_t* rdram, void* ctx) {
     g_api->add_hook(RS64_HOOK_RESULT_FAIL, on_result_fail, nullptr);
     g_api->add_hook(RS64_HOOK_MISSION_END, on_mission_end, nullptr);
     g_api->add_hook(RS64_HOOK_POWERUP_COLLECT, on_powerup_collect, nullptr);
+    g_api->add_hook(RS64_HOOK_PLAYER_DAMAGE, on_player_damage, nullptr);
     g_api->add_hook(RS64_HOOK_MISSION_SELECT_INIT, on_mission_select_init, nullptr);
     g_api->add_hook(RS64_HOOK_MISSION_SELECT_FONTS, on_mission_select_fonts, nullptr);
     g_api->add_hook(RS64_HOOK_MISSION_SELECT_TICK, on_mission_select_tick, nullptr);

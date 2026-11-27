@@ -1,7 +1,7 @@
 from BaseClasses import ItemClassification
 
 from .. import data
-from ..items import MISSION_PASSES, UPGRADES
+from ..items import EXTRAS, LENIENCY, MISSION_PASSES, UPGRADES
 from . import RS64TestBase
 
 
@@ -45,9 +45,9 @@ class TestMinimum(RS64TestBase):
         self.assertEqual(_location_count(self.world), 38)
         own = [i for i in self.multiworld.itempool if i.player == self.player]
         self.assertEqual(len(own), 38)
-        non_filler = [i for i in own if i.name in MISSION_PASSES or i.name in UPGRADES
+        non_filler = [i for i in own if i.name in MISSION_PASSES or i.name in UPGRADES or i.name in EXTRAS
                       or i.name in self.world.item_name_groups["Ships"]]
-        self.assertLessEqual(len(non_filler), 34)
+        self.assertLessEqual(len(non_filler), 35)
 
 
 class TestGold(RS64TestBase):
@@ -81,3 +81,56 @@ class TestDeathLinkSlotData(RS64TestBase):
         slot = self.world.fill_slot_data()
         self.assertEqual(slot["death_link"], 1)
         self.assertEqual(slot["world_version"], data.WORLD_VERSION)
+
+
+class TestShipLogicDefault(RS64TestBase):
+    def test_kile_needs_y_wing(self) -> None:
+        if "Y-wing" in self.world.starting_ships:
+            self.skipTest("this seed starts with the Y-wing")
+        self.collect_by_name(["Assault on Kile II Pass", "X-wing", "Millennium Falcon"])
+        self.assertFalse(self.can_reach_region("Assault on Kile II"))
+        self.collect_by_name(["Y-wing"])
+        self.assertTrue(self.can_reach_region("Assault on Kile II"))
+
+    def test_replay_only_ships_are_useful(self) -> None:
+        for ship in ("Millennium Falcon", "TIE Interceptor", "Naboo N-1 Starfighter"):
+            self.assertEqual(self.world.create_item(ship).classification, ItemClassification.useful)
+        for ship in ("X-wing", "Y-wing", "A-wing", "V-wing", "Snowspeeder", "T-16 Skyhopper"):
+            self.assertEqual(self.world.create_item(ship).classification, ItemClassification.progression)
+
+    def test_starting_ships_are_defaults(self) -> None:
+        defaults = {data.MISSIONS[level]["default_ship"] for level in self.world.starting_missions}
+        self.assertEqual(set(self.world.starting_ships), defaults)
+
+
+class TestShipLogicAny(RS64TestBase):
+    options = {"ship_logic": "any_listed"}
+
+    def test_falcon_opens_kile(self) -> None:
+        self.collect_by_name(["Assault on Kile II Pass", "Millennium Falcon"])
+        self.assertTrue(self.can_reach_region("Assault on Kile II"))
+
+    def test_single_ship_missions_unchanged(self) -> None:
+        for m in data.MISSIONS:
+            if not m["replay_ships"]:
+                self.assertEqual(self.world.mission_ships(m), [m["default_ship"]], m["name"])
+
+    def test_all_ships_progression(self) -> None:
+        self.assertEqual(self.world.create_item("Naboo N-1 Starfighter").classification,
+                         ItemClassification.progression)
+
+
+class TestNewItems(RS64TestBase):
+    def test_replenishing_in_pool_and_useful(self) -> None:
+        names = [i.name for i in self.multiworld.itempool if i.player == self.player]
+        self.assertEqual(names.count("Replenishing Secondaries"), 1)
+        self.assertEqual(self.world.create_item("Replenishing Secondaries").classification, ItemClassification.useful)
+
+    def test_every_leniency_once_at_default(self) -> None:
+        names = [i.name for i in self.multiworld.itempool if i.player == self.player]
+        for name in LENIENCY:
+            self.assertEqual(names.count(name), 1, name)
+            self.assertEqual(self.world.create_item(name).classification, ItemClassification.filler)
+
+    def test_invincibility_is_filler(self) -> None:
+        self.assertEqual(self.world.create_item("Temporary Invincibility").classification, ItemClassification.filler)

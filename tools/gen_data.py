@@ -34,6 +34,10 @@ def item_ids(d: dict) -> dict[str, int]:
         ids[u["name"]] = base + 201 + u["bit"] - 9
     for f in d["filler"]:
         ids[f["name"]] = base + 300 + f["index"]
+    for e in d["extras"]:
+        ids[e["name"]] = base + 250 + e["index"]
+    for m in d["missions"]:
+        ids[f"{m['name']} Medal Leniency"] = base + 400 + m["id"]
     return ids
 
 
@@ -57,9 +61,9 @@ def check(d: dict) -> None:
     for m in d["missions"]:
         assert 0 <= m["id"] <= 18, m
         assert m["kind"] in ("campaign", "final", "bonus"), m
-        assert m["allowed_ships"], f"{m['name']}: no allowed ships"
-        for s in m["allowed_ships"]:
-            assert s in names, f"{m['name']}: unknown ship {s}"
+        assert m["default_ship"] in names, f"{m['name']}: unknown default ship"
+        for s in m["replay_ships"]:
+            assert s in names and s != m["default_ship"], f"{m['name']}: bad replay ship {s}"
         obj = m["objectives"]
         assert obj is None or 0 <= obj <= d["max_objectives_per_mission"], m
     assert [m["id"] for m in d["missions"]] == list(range(19))
@@ -93,7 +97,11 @@ def py_source(d: dict) -> str:
     out += ["]", "", "FILLER: list[dict[str, Any]] = ["]
     for f in d["filler"]:
         out.append(f"    {f!r},")
-    out += ["]", "", "ITEM_IDS: dict[str, int] = {"]
+    out += ["]", "", "EXTRAS: list[dict[str, Any]] = ["]
+    for e in d["extras"]:
+        out.append(f"    {({k: v for k, v in e.items() if not k.startswith('//')})!r},")
+    out += ["]", "", f"LENIENCY: list[str] = {[m['name'] + ' Medal Leniency' for m in d['missions']]!r}",
+            "", "ITEM_IDS: dict[str, int] = {"]
     for k, v in item_ids(d).items():
         out.append(f"    {k!r}: {v},")
     out += ["}", "", "LOCATION_IDS: dict[str, int] = {"]
@@ -126,6 +134,10 @@ def h_source(d: dict) -> str:
         "constexpr int kUpgradeCount = 8;",
         f"constexpr int kFillerCount = {len(d['filler'])};",
         f"constexpr int kMaxObjectives = {d['max_objectives_per_mission']};",
+        f"constexpr float kRegenSeconds = {float(d['regen_seconds'])}f;",
+        f"constexpr float kInvincibilitySeconds = {float(d['invincibility_seconds'])}f;",
+        f"constexpr float kLeniencyTimeScale = {float(d['leniency']['time_scale'])}f;",
+        f"constexpr float kLeniencyNeedScale = {float(d['leniency']['need_scale'])}f;",
         "",
         "// Location slots within a mission: id = kIdBase + level * 100 + slot.",
         f"constexpr int kSlotComplete = {SLOT_COMPLETE};",
@@ -138,13 +150,18 @@ def h_source(d: dict) -> str:
         "constexpr int64_t ship_item(int craft) { return kIdBase + 101 + craft; }",
         "constexpr int64_t upgrade_item(int bit) { return kIdBase + 201 + bit - 9; }",
         "constexpr int64_t filler_item(int index) { return kIdBase + 300 + index; }",
+        "constexpr int64_t extra_item(int index) { return kIdBase + 250 + index; }",
+        "constexpr int64_t leniency_item(int level) { return kIdBase + 400 + level; }",
+        "constexpr int kExtraReplenishingSecondaries = 1;",
         "",
         "// 0 campaign, 1 final (campaign), 2 bonus.",
         "constexpr int kMissionKind[kMissionCount] = {" + ", ".join(str(kind[m["kind"]]) for m in ms) + "};",
         "constexpr bool kMissionPickup[kMissionCount] = {" + ", ".join("true" if m["pickup"] else "false" for m in ms) + "};",
-        "// Hangar mask bits (1 << craft) the apworld's logic assumes per mission.",
-        "constexpr uint32_t kLogicShips[kMissionCount] = {"
-        + ", ".join(hex(sum(1 << craft_of[s] for s in m["allowed_ships"])) for m in ms) + "};",
+        "// Hangar mask bits (1 << craft) per mission: the default ship, and the ships vanilla adds after a completion.",
+        "constexpr uint32_t kDefaultShip[kMissionCount] = {"
+        + ", ".join(hex(1 << craft_of[m["default_ship"]]) for m in ms) + "};",
+        "constexpr uint32_t kReplayShips[kMissionCount] = {"
+        + ", ".join(hex(sum(1 << craft_of[s] for s in m["replay_ships"])) for m in ms) + "};",
         "constexpr const char* kMissionNames[kMissionCount] = {",
     ]
     lines += [f"    {c_str(m['name'])}," for m in ms]

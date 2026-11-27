@@ -8,6 +8,10 @@ The eight weapon and shield upgrades are items too.
 
 You start with one to three missions open, each with a ship that can fly it.
 
+By default (Ship Logic: default_only) each mission needs its default ship, the one vanilla gives you the first
+time. With any_listed, the ships vanilla allows on a replay count too. The Millennium Falcon, TIE Interceptor and
+Naboo N-1 are only replay ships, so under default_only they're useful items rather than keys.
+
 ## What is the goal?
 
 Either complete The Battle of Calamari, or complete a set number of missions (campaign and bonus both count).
@@ -27,7 +31,11 @@ Either complete The Battle of Calamari, or complete a set number of missions (ca
   Naboo N-1 Starfighter.
 - 8 upgrades: Advanced Lasers, Advanced Concussion Missiles, Seeker Concussion Missiles, Advanced Proton Torpedoes,
   Seeker Proton Torpedoes, Seeker Cluster Missiles, Advanced Bombs and Advanced Shields.
-- Filler: Extra Life, Secondary Refill, Hull Repair. Filler waits until you are flying a mission.
+- Replenishing Secondaries: one secondary weapon back every 15 seconds in missions.
+- Medal Leniency, one per mission: that mission's medals get about a third easier (more time allowed, fewer kills,
+  lower accuracy and friendlies needed).
+- Filler: Extra Life, Secondary Refill, Hull Repair, Temporary Invincibility (15 seconds). Filler waits until you
+  are flying a mission.
 
 ## What does another world's item look like in Rogue Squadron?
 

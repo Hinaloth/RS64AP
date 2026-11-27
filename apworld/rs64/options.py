@@ -42,6 +42,18 @@ class StartingMissionPool(Choice):
     default = 0
 
 
+class ShipLogic(Choice):
+    """Which ships the logic lets you fly a mission with.
+
+    default_only: only the mission's default ship (vanilla: the other ships open after a first completion).
+    any_listed: the default ship or any ship vanilla allows on a replay. Needs the game to offer those ships on a first
+    visit, which is not confirmed yet."""
+    display_name = "Ship Logic"
+    option_default_only = 0
+    option_any_listed = 1
+    default = 0
+
+
 class MedalChecks(Choice):
     """The best medal tier that is a check. Medals count up: earning gold sends every enabled tier below it.
 
@@ -81,6 +93,7 @@ class RS64Options(PerGameCommonOptions):
     missions_required: MissionsRequired
     starting_missions: StartingMissions
     starting_mission_pool: StartingMissionPool
+    ship_logic: ShipLogic
     medal_checks: MedalChecks
     upgrade_pickups: UpgradePickups
     objective_checks: ObjectiveChecks

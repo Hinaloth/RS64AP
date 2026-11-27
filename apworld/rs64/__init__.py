@@ -11,8 +11,8 @@ from rule_builder.rules import Has, HasAny, HasFromList, True_
 from worlds.AutoWorld import WebWorld, World
 
 from . import data
-from .items import (FILLER, FILLER_WEIGHTS, ITEM_GROUPS, MISSION_CLEARED, MISSION_PASSES, SHIPS, UPGRADES, VICTORY,
-                    RS64Item, base_classification)
+from .items import (EXTRAS, FILLER, FILLER_WEIGHTS, ITEM_GROUPS, LENIENCY, MISSION_CLEARED, MISSION_PASSES, SHIPS,
+                    UPGRADES, VICTORY, RS64Item, base_classification)
 from .locations import LOCATION_GROUPS, RS64Location, complete, medal, objective, pickup
 from .options import RS64Options
 
@@ -50,6 +50,13 @@ class RS64World(World):
 
     starting_missions: list[int]
     starting_ships: list[str]
+    gating_ships: set[str]
+
+    def mission_ships(self, mission: dict) -> list[str]:
+        """Ships the logic accepts for a mission under the Ship Logic option."""
+        if self.options.ship_logic == self.options.ship_logic.option_any_listed:
+            return [mission["default_ship"], *mission["replay_ships"]]
+        return [mission["default_ship"]]
 
     # ---- generation -------------------------------------------------------------------------------------------
 
@@ -57,9 +64,10 @@ class RS64World(World):
         if self.options.objective_checks and any(m["objectives"] is None for m in data.MISSIONS):
             raise OptionError(f"{self.player_name}: Objective Checks is not available yet "
                               "(per-mission objective counts are still unknown). Turn it off.")
-        if not data.VERIFIED["allowed_ships"]:
-            logger.warning("RS64: the per-mission ship table is provisional (spike S1); "
-                           "seeds may need a ship the game does not offer on a mission.")
+        if self.options.ship_logic == self.options.ship_logic.option_any_listed:
+            logger.warning(f"RS64: {self.player_name} uses Ship Logic any_listed; flying a replay ship on a "
+                           "mission's first visit is not confirmed in-game yet.")
+        self.gating_ships = {s for m in data.MISSIONS for s in self.mission_ships(m)}
 
         pool = [m["id"] for m in data.MISSIONS
                 if self.options.starting_mission_pool == self.options.starting_mission_pool.option_any
@@ -70,9 +78,18 @@ class RS64World(World):
         self.starting_missions = self.random.sample(pool, int(self.options.starting_missions))
         self.starting_ships = []
         for level in self.starting_missions:
-            allowed = data.MISSIONS[level]["allowed_ships"]
+            allowed = self.mission_ships(data.MISSIONS[level])
             if not any(s in self.starting_ships for s in allowed):
                 self.starting_ships.append(self.random.choice(allowed))
+
+        # One starting mission leaves only its own few checks reachable: make one of them open a second mission the
+        # starting ship can fly, so solo seeds with tight settings still generate.
+        if len(self.starting_missions) == 1:
+            flyable = [m["id"] for m in data.MISSIONS
+                       if m["id"] not in self.starting_missions and m["id"] in pool
+                       and any(s in self.starting_ships for s in self.mission_ships(m))]
+            if flyable:
+                self.multiworld.local_early_items[self.player][MISSION_PASSES[self.random.choice(flyable)]] = 1
 
         for level in self.starting_missions:
             self.multiworld.push_precollected(self.create_item(MISSION_PASSES[level]))
@@ -92,7 +109,7 @@ class RS64World(World):
         for m in data.MISSIONS:
             region = Region(m["name"], self.player, self.multiworld)
             self.multiworld.regions.append(region)
-            self.create_entrance(hangar, region, Has(MISSION_PASSES[m["id"]]) & HasAny(*m["allowed_ships"]),
+            self.create_entrance(hangar, region, Has(MISSION_PASSES[m["id"]]) & HasAny(*self.mission_ships(m)),
                                  name=f"Launch {m['name']}")
 
             self._add_location(region, complete(m))
@@ -113,11 +130,14 @@ class RS64World(World):
 
     def create_items(self) -> None:
         started = {MISSION_PASSES[level] for level in self.starting_missions} | set(self.starting_ships)
-        pool = [self.create_item(name) for name in MISSION_PASSES + SHIPS + UPGRADES if name not in started]
+        pool = [self.create_item(name) for name in MISSION_PASSES + SHIPS + UPGRADES + EXTRAS if name not in started]
 
         slots = len(self.multiworld.get_unfilled_locations(self.player))
         if len(pool) > slots:
             raise OptionError(f"{self.player_name}: {len(pool)} items but only {slots} locations.")
+        # Filler: one Medal Leniency per mission first (as many as fit), then the generic filler.
+        leniency = self.random.sample(LENIENCY, min(len(LENIENCY), slots - len(pool)))
+        pool += [self.create_item(name) for name in leniency]
         pool += [self.create_filler() for _ in range(slots - len(pool))]
         self.multiworld.itempool += pool
 
@@ -132,6 +152,7 @@ class RS64World(World):
             "world_version": data.WORLD_VERSION,
             "goal": int(self.options.goal),
             "missions_required": int(self.options.missions_required),
+            "ship_logic": int(self.options.ship_logic),
             "medal_checks": int(self.options.medal_checks),
             "upgrade_pickups": int(self.options.upgrade_pickups),
             "objective_checks": int(self.options.objective_checks),
@@ -142,6 +163,10 @@ class RS64World(World):
 
     def create_item(self, name: str) -> RS64Item:
         classification = base_classification(name)
+        if not hasattr(self, "gating_ships"):
+            self.gating_ships = {s for m in data.MISSIONS for s in self.mission_ships(m)}
+        if name in SHIPS and name not in self.gating_ships:
+            classification = ItemClassification.useful  # opens no mission under this Ship Logic
         if (name in UPGRADES and self.options.medal_checks == self.options.medal_checks.option_gold
                 and self.options.upgrades_for_gold > 0):
             classification = ItemClassification.progression

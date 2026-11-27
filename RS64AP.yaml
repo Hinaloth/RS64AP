@@ -11,6 +11,10 @@ Star Wars Rogue Squadron:
   starting_missions: 2            # 1-3 Mission Passes at the start, each with a ship that can fly it
   starting_mission_pool: campaign # campaign or any (bonus missions too)
 
+  # default_only: a mission needs its default ship. any_listed: the default ship or any ship vanilla allows on a
+  # replay (not confirmed to work on a first visit yet).
+  ship_logic: default_only
+
   medal_checks: silver            # bronze, silver or gold: the best medal tier that is a check
   upgrades_for_gold: 4            # 0-8 upgrades the logic expects before a Gold Medal check
   upgrade_pickups: true           # each mission's hidden upgrade pickup is a check
