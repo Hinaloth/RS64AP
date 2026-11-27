@@ -1,0 +1,19 @@
+# Template for Star Wars: Rogue Squadron (RS64AP). See apworld/rs64/options.py for every option's description.
+name: Player{number}
+game: Star Wars Rogue Squadron
+description: RS64AP template
+
+Star Wars Rogue Squadron:
+  # calamari: complete The Battle of Calamari. missions: complete missions_required missions.
+  goal: calamari
+  missions_required: 10           # 1-19, only used when goal is missions
+
+  starting_missions: 2            # 1-3 Mission Passes at the start, each with a ship that can fly it
+  starting_mission_pool: campaign # campaign or any (bonus missions too)
+
+  medal_checks: silver            # bronze, silver or gold: the best medal tier that is a check
+  upgrades_for_gold: 4            # 0-8 upgrades the logic expects before a Gold Medal check
+  upgrade_pickups: true           # each mission's hidden upgrade pickup is a check
+  objective_checks: false         # not available yet
+
+  death_link: false

@@ -11,6 +11,10 @@ Status markers used throughout:
 - **[PROPOSED]** a default picked to keep moving; change it freely.
 - **[SPIKE Sn]** depends on a fact about the game nobody has checked yet; see [Spikes](#11-spikes).
 
+**Build status (2026-11-27).** M1 (apworld) is done and tested. The client for M2–M8 is written and passes an
+end-to-end test against a real Archipelago server with a fake game (`tools/e2e.py`), but has not run inside the
+recomp. Every spike in section 11 is still open; the client logs `[rs64ap] probe` lines that answer S1, S4, S6 and S7.
+
 Facts about the game cite the recomp repo's docs and sources by path (snapshot: commit `222947ee`,
 2026-11-26, host API v12). Addresses are KSEG0 (`0x80......`).
 
@@ -353,7 +357,7 @@ itself to players (`docs/rule builder.md` in Archipelago).
 
 ```
 apworld/rs64/
-  archipelago.json      {"game": "Star Wars: Rogue Squadron", "minimum_ap_version": "...", "world_version": "0.1.0", "authors": [...]}
+  archipelago.json      {"game": "Star Wars Rogue Squadron", "minimum_ap_version": "0.6.8", "world_version": "0.1.0", "authors": [...]}
   __init__.py           RS64World
   items.py              item table, groups, filler weights
   locations.py          location table
@@ -366,10 +370,13 @@ apworld/rs64/
   test/
 ```
 
-- `minimum_ap_version`: the latest stable Archipelago when M1 starts (core `main` reports 0.6.9
-  in late November 2026). The spec says most worlds only need the minimum.
-- Game name: `Star Wars: Rogue Squadron` **[PROPOSED]**. It must match the client's `Connect`
-  packet exactly and can't change after release.
+- `minimum_ap_version`: `0.6.8`, the latest stable release in November 2026 and the first with everything used
+  here (the rule builder). The spec says most worlds only need the minimum.
+- Game name: `Star Wars Rogue Squadron` **[DECIDED]**, with no colon: AP names the game-info doc
+  `en_<game>.md`, and a colon is not allowed in Windows file names. It must match the client's `Connect` packet
+  exactly and can't change after release.
+- A packaged `.apworld` also needs `version` / `compatible_version` (7) in its manifest; `tools/package.py`
+  adds them.
 
 ### 7.2 World class
 
@@ -440,11 +447,11 @@ The client keeps an **AP state**: received passes, ships, upgrades, Naboo flag. 
 | Game value | Written as |
 | --- | --- |
 | Pilot `current_level` | 15, so SELECT LEVEL builds every campaign entry |
-| Mission-select unlocked mask `0x800CDAD0` | bits of owned passes **[SPIKE S2]** |
+| Mission-select unlocked mask `0x800CDAD0` | not written yet: the client blocks A/Start on a mission with no pass or no flyable ship instead (the fallback below), until S2 shows whether the mask can gate entries out of order **[SPIKE S2]** |
 | Bonus-level visibility (cheat bits WOISTHAN / DEADDACK and the Beggar's Canyon bit) | set only for owned bonus passes **[SPIKE S2]** |
 | Cheat bits GAMEFLO!, FARMBOY, TIEDUP, HALIFAX?, CHICKEN | cleared; FARMBOY / TIEDUP set only when Falcon / TIE received |
 | Naboo key `gGameSettings+0x28` / save `+0xAC` | `0x050FE09C` when N-1 received, else 0 |
-| Pilot unlock word upgrade bits | exactly the received upgrades |
+| Pilot unlock word (`kUnlockMask` `0x7FFE00`) | exactly the received upgrades, plus the all-craft bit `0x80000` so the hangar offers every craft a level allows; the other level/craft unlock bits cleared |
 | `0x80130B4C` upgrade bits, during a mission | exactly the received upgrades, every mission frame (reverts pickups) |
 | Hangar allowed mask `0x800CD6D8` | vanilla mask AND received ships, at `CRAFT_SELECT_INIT` and each `CRAFT_SELECT_TICK` **[SPIKE S3]** |
 
@@ -599,9 +606,11 @@ RS64AP/
 `-DRS64_RECOMP_DIR=<path to a RogueSquadron64Recomp checkout>` and adds its `include/`. The recomp
 is a build-time path or submodule, never copied into this repo.
 
-**Licensing note.** The recomp's README says it has no license. RS64AP ships only its own code and
-builds against the public `host_api.h`. Ask the recomp author before publishing a release, and
-check that bundling the AP client library's license (and OpenSSL's, if used) is fine.
+**Licensing [DECIDED].** The recomp is GPL-3.0 (its `LICENSE` and README; an earlier note here said it had none,
+which was wrong). The client is a plugin loaded into that process and built against its GPL header, so `client/` is
+**GPL-3.0-or-later**. The apworld runs inside Archipelago (MIT) and only talks to the client over the network, so it
+and the rest of the repo are **MIT**, the norm for Archipelago worlds. Bundled client dependencies (apclientpp,
+wswrap, websocketpp, asio, nlohmann/json, OpenSSL 3, zlib) are all GPL-3.0-compatible; `client/NOTICE.md` lists them.
 
 **Release artifacts:** `rs64.apworld`, `rs64ap-client-<os>.zip` (the mod folder to drop into the
 game's `mods/`), a template YAML.
@@ -695,8 +704,7 @@ Using Archipelago's `WorldTestBase`:
 2. **Gold logic**: require `upgrades_for_gold` upgrades (default 4), or no extra rule.
 3. **Silver logic**: currently no extra rule.
 4. **Objectives**: send immediately even if the mission fails (current), or only on success.
-5. **Game name** string for the apworld and `Connect`.
-6. **Filler set**: keep Hull Repair if S8 finds the health field cheaply?
+5. **Filler set**: keep Hull Repair if S8 finds the health field cheaply?
 
 ---
 
@@ -714,3 +722,6 @@ Using Archipelago's `WorldTestBase`:
 | 2026-11-27 | Locations: mission complete (always); objectives optional, off by default; upgrade pickups optional, encouraged; medals bronze/silver/gold, default silver, no off. |
 | 2026-11-27 | No rank checks. |
 | 2026-11-27 | Goal: The Battle of Calamari or X missions completed. |
+| 2026-11-27 | Game name `Star Wars Rogue Squadron` (no colon). |
+| 2026-11-27 | Licenses: `client/` GPL-3.0-or-later (follows the recomp), everything else MIT. |
+| 2026-11-27 | `minimum_ap_version` 0.6.8. |

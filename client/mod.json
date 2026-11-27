@@ -1,0 +1,19 @@
+{
+  "game_id": "rs64",
+  "id": "rs64ap",
+  "display_name": "Archipelago (RS64AP)",
+  "description": "Archipelago multiworld randomizer client. Main menu > ARCHIPELAGO, pick a fresh pilot, CONNECT. Set the server and slot below first. The pilot you connect is bound to that seed and its unlocks are rewritten by the client.",
+  "version": "0.1.0",
+  "authors": ["Hinaloth", "RS64AP contributors"],
+  "minimum_recomp_version": "0.0.0",
+  "enabled_by_default": false,
+  "native_libraries": { "rs64ap": ["rs64_mod_init"] },
+  "config_schema": {
+    "options": [
+      { "id": "server",     "name": "Server",     "description": "Archipelago server address, e.g. archipelago.gg:38281.", "type": "String", "default": "" },
+      { "id": "slot",       "name": "Slot name",  "description": "Your slot (player) name in the room.",                    "type": "String", "default": "" },
+      { "id": "password",   "name": "Password",   "description": "Room password, if it has one.",                           "type": "String", "default": "" },
+      { "id": "cert_store", "name": "CA bundle",  "description": "Optional path to a CA certificate bundle (.pem) for wss://. Empty = system certificates.", "type": "String", "default": "" }
+    ]
+  }
+}

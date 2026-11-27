@@ -1,0 +1,15 @@
+{
+  "//": "ARCHIPELAGO goes to the pilot select like START; once a pilot is chosen this page opens, and mission select follows as soon as the client is connected with that pilot bound (exit_when ap_ready). A pilot that is already bound reconnects on its own. Live rows come from the rs64ap native library's text sources.",
+  "buttons": [
+    { "id": "ap_open", "menu": "main_menu", "type": "action", "action": "none", "transition": "account", "page": "archipelago",
+      "exit_when": "ap_ready", "label": "ARCHIPELAGO", "title": "ARCHIPELAGO", "after": "options", "title_y": -20 },
+
+    { "id": "ap_status", "menu": "archipelago", "type": "label", "label": "NOT CONNECTED", "label_src": "ap_status", "y": -18 },
+    { "id": "ap_pilot", "menu": "archipelago", "type": "label", "label": " ", "label_src": "ap_pilot", "scale": 0.75, "gap_after": 12 },
+    { "id": "ap_connect", "menu": "archipelago", "type": "action", "action": "ap_connect", "label": "CONNECT", "gap_after": 8 },
+    { "id": "ap_disconnect", "menu": "archipelago", "type": "action", "action": "ap_disconnect", "label": "DISCONNECT", "gap_after": 8 },
+    { "id": "ap_unbind", "menu": "archipelago", "type": "action", "action": "ap_unbind", "label": "FORGET PILOT SEED",
+      "confirm": "FORGET THIS PILOT'S SEED?", "gap_after": 16 },
+    { "id": "ap_last", "menu": "archipelago", "type": "label", "note": true, "label": " ", "label_src": "ap_last" }
+  ]
+}

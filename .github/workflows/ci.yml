@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  AP_VERSION: "0.6.8"
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generated data is up to date
+        run: python tools/gen_data.py --check
+
+      - name: Archipelago ${{ env.AP_VERSION }}
+        run: |
+          git clone --depth 1 --branch "$AP_VERSION" https://github.com/ArchipelagoMW/Archipelago.git ap
+          grep -v -i -E "kivy|pymem|pyshortcuts" ap/requirements.txt > ap-req.txt
+          pip install -r ap-req.txt pytest
+          ln -s "$GITHUB_WORKSPACE/apworld/rs64" ap/worlds/rs64
+
+      - name: apworld tests
+        working-directory: ap
+        run: python -m pytest -q worlds/rs64/test
+
+      - name: Build client + harness
+        run: |
+          sudo apt-get update && sudo apt-get install -y libssl-dev zlib1g-dev ninja-build
+          cmake -S client -B build/client -G Ninja -DCMAKE_BUILD_TYPE=Release -DRS64AP_BUILD_HARNESS=ON -DRS64AP_REQUIRE_SSL=ON
+          cmake --build build/client
+
+      - name: End-to-end (harness against a local MultiServer)
+        run: python tools/e2e.py --ap ap --build build/client
+
+      - name: Package
+        run: python tools/package.py --client build/client
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rs64ap-linux
+          path: dist/
+
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: OpenSSL (static, vcpkg)
+        run: vcpkg install openssl:x64-windows-static
+
+      - name: Build client
+        run: |
+          cmake -S client -B build/client -A x64 `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static -DRS64AP_REQUIRE_SSL=ON
+          cmake --build build/client --config Release
+
+      - name: Package
+        run: python tools/package.py --client build/client
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rs64ap-windows
+          path: dist/rs64ap-client-windows.zip
