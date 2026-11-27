@@ -20,7 +20,10 @@ constexpr uint32_t kSecondaryMax = 0x80130B13u;   // u8
 constexpr uint32_t kObjectivesDone = 0x80130B15u; // u8 completedObjectiveFlags
 constexpr uint32_t kObjectivesHidden = 0x80130B16u;
 constexpr uint32_t kObjectiveCount = 0x80130B17u; // u8 numMissionObjectives
+constexpr uint32_t kMissionResult = 0x80130B14u;  // u8 at mission end: 1 success, 2 failure, 3 abort/game over.
+                                                  // Scripted ends write it directly, skipping the success hook.
 constexpr uint32_t kActiveUnlocks = 0x80130B18u;  // u32, mirrors kSettingsWord bits 9..22
+constexpr uint32_t kBestMedals = 0x80130B1Cu;     // u8[level]: live best medal (0-3), what the debrief compares against
 
 // Save body 0x8013A5C0 / pilots
 constexpr uint32_t kSaveNabooKey = 0x8013A5C0u + 0xACu;

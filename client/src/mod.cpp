@@ -253,12 +253,22 @@ void flush_locations() {
     check_goal();
 }
 
+// Best medal for a level: the live array the debrief writes, or the pilot's saved record, whichever is better.
+int best_medal(const uint8_t* rdram, int level) {
+    const uint32_t acct = a::account(S.pilot_slot);
+    const int saved = (rb(rdram, acct + a::kAcctMedals + (uint32_t)(level >> 2)) >> ((level & 3) * 2)) & 3;
+    const int live = rb(rdram, a::kBestMedals + (uint32_t)level);
+    return std::max(saved, live <= 3 ? live : 0);
+}
+
+// A medal sends its own tier and every tier below it (all three always exist; the apworld puts filler in the tiers
+// above the seed's Medal Checks). Any medal also means the mission was completed.
 void scan_medals(const uint8_t* rdram, int level) {
     if (!owned_level(level)) return;
-    const uint32_t acct = a::account(S.pilot_slot);
-    const int medal = (rb(rdram, acct + a::kAcctMedals + (uint32_t)(level >> 2)) >> ((level & 3) * 2)) & 3;
-    const int tiers = S.connected ? std::min(medal, S.medal_checks) : medal;
-    for (int t = 1; t <= tiers; ++t) queue_location(d::location_id(level, t));
+    const int medal = best_medal(rdram, level);
+    if (medal <= 0) return;
+    queue_location(d::location_id(level, d::kSlotComplete));
+    for (int t = 1; t <= medal; ++t) queue_location(d::location_id(level, t));
 }
 
 // ---- network events --------------------------------------------------------------------------------------------
@@ -436,7 +446,7 @@ int on_menu_frame(uint32_t, uint8_t* rdram, void*, void*) {
     }
     if (--S.medal_scan_cool <= 0) {
         S.medal_scan_cool = 30;
-        if (S.last_played >= 0) scan_medals(rdram, S.last_played);
+        for (int lv = 0; lv < d::kMissionCount; ++lv) scan_medals(rdram, lv);
         save_file();
     }
     return RS64_HOOK_CONTINUE;
@@ -626,10 +636,13 @@ int on_result_fail(uint32_t, uint8_t*, void*, void*) {
     return RS64_HOOK_CONTINUE;
 }
 
-int on_mission_end(uint32_t, uint8_t*, void*, void*) {
+int on_mission_end(uint32_t, uint8_t* rdram, void*, void*) {
     if (active() && owned_level(S.level) && S.leniency[S.level]) S.leniency_pending = S.level;
     S.invincible_until = 0.0f;
-    if (S.pending_complete && active()) {
+    // Success either through the success request (RESULT_SUCCESS) or a result the level script wrote directly.
+    const uint8_t result = rb(rdram, a::kMissionResult);
+    logf("mission %d ended: result %u, success request %s", S.level, result, S.pending_complete ? "yes" : "no");
+    if ((S.pending_complete || result == 1) && active() && owned_level(S.level)) {
         queue_location(d::location_id(S.level, d::kSlotComplete));
         logf("mission %d complete", S.level);
     }

@@ -11,9 +11,16 @@ def _location_count(world) -> int:
 
 class TestDefaults(RS64TestBase):
     def test_location_count(self) -> None:
-        # complete (19) + bronze + silver (38) + pickups (10)
+        # complete (19) + bronze, silver and gold (57, always) + pickups (10)
         pickups = sum(1 for m in data.MISSIONS if m["pickup"])
-        self.assertEqual(_location_count(self.world), 19 * 3 + pickups)
+        self.assertEqual(_location_count(self.world), 19 * 4 + pickups)
+
+    def test_gold_excluded_at_silver(self) -> None:
+        from BaseClasses import LocationProgressType
+        gold = self.multiworld.get_location("Ambush at Mos Eisley - Gold Medal", self.player)
+        silver = self.multiworld.get_location("Ambush at Mos Eisley - Silver Medal", self.player)
+        self.assertEqual(gold.progress_type, LocationProgressType.EXCLUDED)
+        self.assertNotEqual(silver.progress_type, LocationProgressType.EXCLUDED)
 
     def test_items_fill_locations(self) -> None:
         own = [i for i in self.multiworld.itempool if i.player == self.player]
@@ -42,9 +49,9 @@ class TestMinimum(RS64TestBase):
     options = {"medal_checks": "bronze", "upgrade_pickups": False, "starting_missions": 1}
 
     def test_fits(self) -> None:
-        self.assertEqual(_location_count(self.world), 38)
+        self.assertEqual(_location_count(self.world), 76)
         own = [i for i in self.multiworld.itempool if i.player == self.player]
-        self.assertEqual(len(own), 38)
+        self.assertEqual(len(own), 76)
         non_filler = [i for i in own if i.name in MISSION_PASSES or i.name in UPGRADES or i.name in EXTRAS
                       or i.name in self.world.item_name_groups["Ships"]]
         self.assertLessEqual(len(non_filler), 35)

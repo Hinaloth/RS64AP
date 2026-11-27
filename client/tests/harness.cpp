@@ -286,7 +286,8 @@ int main(int argc, char** argv) {
     }
     ww(RAM, a::kMedalInfoPtr, table);
 
-    fire(RS64_HOOK_RESULT_SUCCESS);
+    // A scripted end: the result byte says success, no success request.
+    wb(RAM, a::kMissionResult, 1);
     fire(RS64_HOOK_MISSION_END);
     frames(1);
     const uint32_t eased = rw(RAM, a::kMedalInfoPtr);
@@ -304,9 +305,8 @@ int main(int argc, char** argv) {
     fire(RS64_HOOK_MISSION_SELECT_INIT, &back);
     expect(rw(RAM, a::kMedalInfoPtr) == table, "medal table pointer restored at mission select");
 
-    // Debrief writes a silver medal for the level.
-    const uint32_t medal_byte = acct + a::kAcctMedals + (uint32_t)(level >> 2);
-    wb(RAM, medal_byte, (uint8_t)(rb(RAM, medal_byte) | (2u << ((level & 3) * 2))));
+    // The debrief writes a gold medal to the live best-medal array (the saved record is left as it was).
+    wb(RAM, a::kBestMedals + (uint32_t)level, 3);
     frames(100);
 
     const std::string pilot = slurp(g_data_dir + "pilot_0.json");
@@ -314,6 +314,7 @@ int main(int argc, char** argv) {
     expect(has(d::location_id(level, d::kSlotComplete)), "complete check recorded");
     expect(has(d::location_id(level, d::kSlotBronze)), "bronze check recorded");
     expect(has(d::location_id(level, d::kSlotSilver)), "silver check recorded");
+    expect(has(d::location_id(level, d::kSlotGold)), "gold check recorded");
     expect(!d::kMissionPickup[level] || has(d::location_id(level, d::kSlotPickup)), "pickup check recorded");
     expect(pilot.find("\"unsent\": []") != std::string::npos, "nothing left unsent");
     std::fprintf(stderr, "last message: %s\n", text("ap_last").c_str());

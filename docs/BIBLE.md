@@ -246,7 +246,7 @@ the craft health field **[SPIKE S8]**; drop it if that takes too long.
 | Set | Per mission | Total | Default | Option |
 | --- | --- | ---: | --- | --- |
 | Mission complete | 1 | 19 | always | none |
-| Medals | 1–3 (cumulative) | 19 / 38 / 57 | silver (38) | `medal_checks`: bronze / silver / gold, never off **[DECIDED]** |
+| Medals | 3, always (cumulative) | 57 | all three tiers | `medal_checks` (bronze / silver / gold, default silver) sets the best tier that can hold useful items; tiers above it are excluded locations, filler only **[DECIDED]** |
 | Upgrade pickups | 0–1 | 10 | on | `upgrade_pickups` (encouraged) **[DECIDED]** |
 | Objectives | n | TBD | off | `objective_checks` **[DECIDED]**; counts per mission are **[SPIKE S6]** |
 
@@ -268,9 +268,11 @@ Worst case for items: one starting mission and one starting ship:
 
 | Settings | Locations | Spare for filler |
 | --- | ---: | ---: |
-| Minimum: complete + bronze | 38 | 3 |
-| Default: complete + silver + pickups | 67 | 32 |
-| Max (no objectives): complete + gold + pickups | 86 | 51 |
+| No pickups | 76 | 41 |
+| With pickups (default) | 86 | 51 |
+
+Every setting has 57 medal checks; `medal_checks` only changes how many of them are excluded (filler only):
+38 at bronze, 19 at silver, none at gold.
 
 The minimum always fits, which is why `medal_checks` has no off. Each extra starting mission takes
 one pass, and sometimes one ship, out of the pool. The apworld still asserts
@@ -745,5 +747,6 @@ Using Archipelago's `WorldTestBase`:
 | 2026-11-27 | Game name `Star Wars Rogue Squadron` (no colon). |
 | 2026-11-27 | Licenses: `client/` GPL-3.0-or-later (follows the recomp), everything else MIT. |
 | 2026-11-27 | `minimum_ap_version` 0.6.8. |
+| 2026-11-28 | All three medal tiers are always checks, and a medal sends every tier below it. `medal_checks` now only sets the best tier that can hold useful items; higher tiers hold filler. A completion with no medal still sends Complete: the client reads the mission result byte (`0x80130B14` = 1), because scripted mission ends skip the success hook. Medals are read from the live best-medal array (`0x80130B1C`) as well as the pilot record. |
 | 2026-11-27 | New items: Replenishing Secondaries (useful, 1 per 15 s), Temporary Invincibility (filler, 15 s, damage-hook method), Medal Leniency per mission (filler, a third easier). No Wingmen Health item. |
 | 2026-11-27 | Per-mission default and replay ships recorded from play. `ship_logic` option: `default_only` (default) until replay ships are confirmed launchable on a first visit, then `any_listed` is available. |

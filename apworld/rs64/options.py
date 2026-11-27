@@ -55,9 +55,10 @@ class ShipLogic(Choice):
 
 
 class MedalChecks(Choice):
-    """The best medal tier that is a check. Medals count up: earning gold sends every enabled tier below it.
+    """Every mission's bronze, silver and gold medals are always checks, and a medal also sends every tier below it.
+    This sets the best tier whose checks can hold useful items: tiers above it only ever hold filler.
 
-    bronze: one medal check per mission. silver: two. gold: three."""
+    bronze: only bronze medals can hold useful items. silver: bronze and silver. gold: all three."""
     display_name = "Medal Checks"
     option_bronze = 1
     option_silver = 2

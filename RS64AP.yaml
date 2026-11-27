@@ -15,7 +15,8 @@ Star Wars Rogue Squadron:
   # replay (not confirmed to work on a first visit yet).
   ship_logic: default_only
 
-  medal_checks: silver            # bronze, silver or gold: the best medal tier that is a check
+  medal_checks: silver            # bronze, silver or gold: the best medal tier that can hold useful items
+                                  # (all three tiers are always checks; higher tiers hold filler)
   upgrades_for_gold: 4            # 0-8 upgrades the logic expects before a Gold Medal check
   upgrade_pickups: true           # each mission's hidden upgrade pickup is a check
   objective_checks: false         # not available yet
