@@ -8,6 +8,10 @@ The eight weapon and shield upgrades are items too.
 
 You start with one to three missions open, each with a ship that can fly it.
 
+By default (Ship Logic: default_only) each mission needs its default ship, the one vanilla gives you the first
+time. With any_listed, the ships vanilla allows on a replay count too. The Millennium Falcon, TIE Interceptor and
+Naboo N-1 are only replay ships, so under default_only they're useful items rather than keys.
+
 ## What is the goal?
 
 Either complete The Battle of Calamari, or complete a set number of missions (campaign and bonus both count).

@@ -100,6 +100,7 @@ struct Session {
     int goal = 0;
     int missions_required = 19;
     int medal_checks = 3;
+    int ship_logic = 0;            // 0 default ship only, 1 any listed ship
     bool objective_checks = false;
     bool death_link = false;
 
@@ -293,6 +294,7 @@ void on_connected(ConnectedInfo info) {
     S.goal = sd.value("goal", 0);
     S.missions_required = sd.value("missions_required", 19);
     S.medal_checks = sd.value("medal_checks", 3);
+    S.ship_logic = sd.value("ship_logic", 0);
     S.objective_checks = sd.value("objective_checks", 0) != 0;
     S.death_link = sd.value("death_link", 0) != 0;
     if (S.death_link) g_net.enable_deathlink_tag();
@@ -383,7 +385,9 @@ void show_status(uint8_t* rdram, void* ctx, uint32_t slot, int y, const std::str
 const char* lock_reason(int level) {
     if (level < 0 || level >= d::kMissionCount) return nullptr;
     if (!S.passes[level]) return "NO MISSION PASS";
-    const uint32_t mask = S.level_mask[level] ? S.level_mask[level] : d::kLogicShips[level];
+    // The game's own hangar list for the level when known, else the data table under the seed's Ship Logic.
+    const uint32_t table = d::kDefaultShip[level] | (S.ship_logic == 1 ? d::kReplayShips[level] : 0u);
+    const uint32_t mask = S.level_mask[level] ? S.level_mask[level] : table;
     if (!(mask & S.ships)) return "NO SHIP FOR THIS MISSION";
     return nullptr;
 }

@@ -70,30 +70,31 @@ every vanilla unlock path (medals, passcodes, debrief rewards); it overwrites th
 
 ### 2.1 Missions (level ids)
 
-From `src/main/discord_presence.cpp` and `tools/debug/recordings/README.md`.
+Ids from `src/main/discord_presence.cpp`. Ships from play (2026-11-27): the default ship is the one the first flight
+uses; replay ships are the ones vanilla adds after a completion. Hoth wasn't listed and is assumed Snowspeeder only.
 
-| Id | Mission | Kind | Upgrade pickup |
-| ---: | --- | --- | --- |
-| 0 | Ambush at Mos Eisley | campaign | |
-| 1 | Rendezvous on Barkhesh | campaign | |
-| 2 | The Search for the Nonnah | campaign | yes |
-| 3 | Defection at Corellia | campaign | yes |
-| 4 | Liberation of Gerrard V | campaign | |
-| 5 | The Jade Moon | campaign | yes |
-| 6 | Imperial Construction Yards | campaign | |
-| 7 | Assault on Kile II | campaign | yes |
-| 8 | Rescue on Kessel | campaign | |
-| 9 | Prisons of Kessel | campaign | yes |
-| 10 | Battle Above Taloraan | campaign | yes |
-| 11 | Escape from Fest | campaign | yes |
-| 12 | Blockade on Chandrila | campaign | yes |
-| 13 | Raid on Sullust | campaign | yes |
-| 14 | Moff Seerdon's Revenge | campaign | yes |
-| 15 | The Battle of Calamari | campaign (final) | |
-| 16 | Beggar's Canyon | bonus | |
-| 17 | The Death Star Trench Run | bonus | |
-| 18 | The Battle of Hoth | bonus | |
-| 20 | CHICKEN (AT-ST passcode level) | not in AP | |
+| Id | Mission | Kind | Default ship | Replay ships | Upgrade pickup |
+| ---: | --- | --- | --- | --- | --- |
+| 0 | Ambush at Mos Eisley | campaign | X-wing | A, V, Falcon, TIE, N-1 | |
+| 1 | Rendezvous on Barkhesh | campaign | X-wing | A, V, Falcon, TIE, N-1 | |
+| 2 | The Search for the Nonnah | campaign | A-wing | X, V, Falcon, TIE, N-1 | yes |
+| 3 | Defection at Corellia | campaign | Snowspeeder | none | yes |
+| 4 | Liberation of Gerrard V | campaign | X-wing | A, V, Falcon, TIE, N-1 | |
+| 5 | The Jade Moon | campaign | X-wing | A, V, Falcon, TIE, N-1 | yes |
+| 6 | Imperial Construction Yards | campaign | Snowspeeder | none | |
+| 7 | Assault on Kile II | campaign | Y-wing | Falcon, TIE, N-1 | yes |
+| 8 | Rescue on Kessel | campaign | X-wing | none | |
+| 9 | Prisons of Kessel | campaign | X-wing | A, V, Falcon, TIE, N-1 | yes |
+| 10 | Battle Above Taloraan | campaign | A-wing | X, Falcon, TIE, N-1 | yes |
+| 11 | Escape from Fest | campaign | Snowspeeder | none | yes |
+| 12 | Blockade on Chandrila | campaign | X-wing | A, V, Falcon, TIE, N-1 | yes |
+| 13 | Raid on Sullust | campaign | Y-wing | Falcon, TIE, N-1 | yes |
+| 14 | Moff Seerdon's Revenge | campaign | X-wing | A, V, Falcon, TIE, N-1 | yes |
+| 15 | The Battle of Calamari | campaign (final) | V-wing | X, A, Falcon, TIE, N-1 | |
+| 16 | Beggar's Canyon | bonus | T-16 Skyhopper | none | |
+| 17 | The Death Star Trench Run | bonus | X-wing | none | |
+| 18 | The Battle of Hoth | bonus | Snowspeeder (assumed) | none | |
+| 20 | CHICKEN (AT-ST passcode level) | not in AP | | | |
 
 The pickup column comes from the recordings README, which lists 10 levels whose run collects or
 passes its level's upgrade. There are only 8 upgrade bits, so some levels must share an upgrade
@@ -283,7 +284,7 @@ checked by the client against its own sent-location set.
 - For each starting mission, if no ship owned so far can fly it, one ship from its allowed set is
   precollected (random). Two starting missions can therefore share one starting ship.
 - With `goal: calamari`, Calamari is never a starting mission.
-- If the T-16 or Snowspeeder missions are drawn, their only craft becomes the starting ship.
+- The starting ship is the mission's default ship (`default_only`), or any ship it allows (`any_listed`).
 
 ### 5.3 Options
 
@@ -297,6 +298,7 @@ checked by the client against its own sent-location set.
 | `upgrade_pickups` | on / off | on | DECIDED |
 | `objective_checks` | on / off | off | DECIDED |
 | `upgrades_for_gold` | 0–8 | 4 | PROPOSED |
+| `ship_logic` | `default_only`, `any_listed` | `default_only` | DECIDED |
 | `death_link` | on / off | off | PROPOSED, milestone M8 |
 
 Standard AP options (`start_inventory`, `local_items`, `exclude_locations`, ...) come from
@@ -313,12 +315,17 @@ Menu ──► Hangar ──► <Mission 0> … <Mission 18>
 ```
 
 - `Menu` → `Hangar`: free.
-- `Hangar` → `<Mission N>`: `Has(<N> Pass) & HasAny(*allowed_ships[N])`.
+- `Hangar` → `<Mission N>`: `Has(<N> Pass) & HasAny(*ships[N])`, where `ships[N]` depends on `ship_logic`
+  **[DECIDED]**:
+  - `default_only` (default): the default ship only. Guaranteed by vanilla.
+  - `any_listed`: the default ship plus the replay ships. Only safe once the game is confirmed to offer replay ships
+    on a mission's first visit **[SPIKE S3]**.
+- Ships that open no mission under the chosen `ship_logic` are classified useful, not progression. Under
+  `default_only` those are the Falcon, the TIE Interceptor and the N-1.
+- With one starting mission, one of its checks is guaranteed (`local_early_items`) to hold a pass for another
+  mission the starting ship can fly, so tight solo settings still generate.
 - All of a mission's locations live in its region.
 
-`allowed_ships[N]` is the vanilla hangar mask for level N with every craft unlocked, from
-**[SPIKE S1]**. Until S1 lands, the table is filled from the vanilla defaults known to be single-craft
-(Hoth: Snowspeeder; Beggar's Canyon: T-16) and marked provisional in `data/`.
 
 ### 6.2 Location rules
 
@@ -725,3 +732,4 @@ Using Archipelago's `WorldTestBase`:
 | 2026-11-27 | Game name `Star Wars Rogue Squadron` (no colon). |
 | 2026-11-27 | Licenses: `client/` GPL-3.0-or-later (follows the recomp), everything else MIT. |
 | 2026-11-27 | `minimum_ap_version` 0.6.8. |
+| 2026-11-27 | Per-mission default and replay ships recorded from play. `ship_logic` option: `default_only` (default) until replay ships are confirmed launchable on a first visit, then `any_listed` is available. |

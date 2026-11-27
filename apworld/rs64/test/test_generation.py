@@ -81,3 +81,39 @@ class TestDeathLinkSlotData(RS64TestBase):
         slot = self.world.fill_slot_data()
         self.assertEqual(slot["death_link"], 1)
         self.assertEqual(slot["world_version"], data.WORLD_VERSION)
+
+
+class TestShipLogicDefault(RS64TestBase):
+    def test_kile_needs_y_wing(self) -> None:
+        state = self.multiworld.state
+        self.collect_by_name(["Assault on Kile II Pass", "X-wing", "Millennium Falcon"])
+        self.assertFalse(self.can_reach_region("Assault on Kile II"))
+        self.collect_by_name(["Y-wing"])
+        self.assertTrue(self.can_reach_region("Assault on Kile II"))
+
+    def test_replay_only_ships_are_useful(self) -> None:
+        for ship in ("Millennium Falcon", "TIE Interceptor", "Naboo N-1 Starfighter"):
+            self.assertEqual(self.world.create_item(ship).classification, ItemClassification.useful)
+        for ship in ("X-wing", "Y-wing", "A-wing", "V-wing", "Snowspeeder", "T-16 Skyhopper"):
+            self.assertEqual(self.world.create_item(ship).classification, ItemClassification.progression)
+
+    def test_starting_ships_are_defaults(self) -> None:
+        defaults = {data.MISSIONS[level]["default_ship"] for level in self.world.starting_missions}
+        self.assertEqual(set(self.world.starting_ships), defaults)
+
+
+class TestShipLogicAny(RS64TestBase):
+    options = {"ship_logic": "any_listed"}
+
+    def test_falcon_opens_kile(self) -> None:
+        self.collect_by_name(["Assault on Kile II Pass", "Millennium Falcon"])
+        self.assertTrue(self.can_reach_region("Assault on Kile II"))
+
+    def test_single_ship_missions_unchanged(self) -> None:
+        for m in data.MISSIONS:
+            if not m["replay_ships"]:
+                self.assertEqual(self.world.mission_ships(m), [m["default_ship"]], m["name"])
+
+    def test_all_ships_progression(self) -> None:
+        self.assertEqual(self.world.create_item("Naboo N-1 Starfighter").classification,
+                         ItemClassification.progression)

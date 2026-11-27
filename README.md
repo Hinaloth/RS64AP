@@ -16,10 +16,10 @@ The full design and build plan is in [docs/BIBLE.md](docs/BIBLE.md).
 | --- | --- |
 | apworld | Complete for the current design. Tests pass on Archipelago 0.6.8+, including generation across every option combination. |
 | Client mod | Builds on Linux. Tested end to end against a real Archipelago server with a fake game (`tools/e2e.py`): connect, pilot binding, start items, unlock enforcement, mission/ship gating, completion/medal/pickup checks, reconnect. **Not run inside the recomp yet.** |
-| Game data | **Provisional.** Which ships each mission allows, the pickups and the objective counts still need checking in the game (spikes S1–S12 in the bible). The client logs `[rs64ap] probe ...` lines with the real values. |
+| Game data | Default and replay ships per mission come from play. Still open: whether replay ships can launch on a mission's first visit, the pickups and the objective counts (spikes in the bible). The client logs `[rs64ap] probe ...` lines with the real values. |
 
-Until spike S1 lands, logic assumes most missions need the X-wing (Gerrard V the V-wing, Beggar's Canyon the T-16,
-Hoth the Snowspeeder). The apworld warns about this when it generates.
+**Ship Logic** defaults to `default_only`: a mission needs its pass and its default ship. `any_listed` also accepts
+the ships vanilla allows on a replay. Turn it on once the game is confirmed to offer them on a first visit.
 
 ## Repository layout
 

@@ -57,9 +57,9 @@ def check(d: dict) -> None:
     for m in d["missions"]:
         assert 0 <= m["id"] <= 18, m
         assert m["kind"] in ("campaign", "final", "bonus"), m
-        assert m["allowed_ships"], f"{m['name']}: no allowed ships"
-        for s in m["allowed_ships"]:
-            assert s in names, f"{m['name']}: unknown ship {s}"
+        assert m["default_ship"] in names, f"{m['name']}: unknown default ship"
+        for s in m["replay_ships"]:
+            assert s in names and s != m["default_ship"], f"{m['name']}: bad replay ship {s}"
         obj = m["objectives"]
         assert obj is None or 0 <= obj <= d["max_objectives_per_mission"], m
     assert [m["id"] for m in d["missions"]] == list(range(19))
@@ -142,9 +142,11 @@ def h_source(d: dict) -> str:
         "// 0 campaign, 1 final (campaign), 2 bonus.",
         "constexpr int kMissionKind[kMissionCount] = {" + ", ".join(str(kind[m["kind"]]) for m in ms) + "};",
         "constexpr bool kMissionPickup[kMissionCount] = {" + ", ".join("true" if m["pickup"] else "false" for m in ms) + "};",
-        "// Hangar mask bits (1 << craft) the apworld's logic assumes per mission.",
-        "constexpr uint32_t kLogicShips[kMissionCount] = {"
-        + ", ".join(hex(sum(1 << craft_of[s] for s in m["allowed_ships"])) for m in ms) + "};",
+        "// Hangar mask bits (1 << craft) per mission: the default ship, and the ships vanilla adds after a completion.",
+        "constexpr uint32_t kDefaultShip[kMissionCount] = {"
+        + ", ".join(hex(1 << craft_of[m["default_ship"]]) for m in ms) + "};",
+        "constexpr uint32_t kReplayShips[kMissionCount] = {"
+        + ", ".join(hex(sum(1 << craft_of[s] for s in m["replay_ships"])) for m in ms) + "};",
         "constexpr const char* kMissionNames[kMissionCount] = {",
     ]
     lines += [f"    {c_str(m['name'])}," for m in ms]
