@@ -85,7 +85,8 @@ class TestDeathLinkSlotData(RS64TestBase):
 
 class TestShipLogicDefault(RS64TestBase):
     def test_kile_needs_y_wing(self) -> None:
-        state = self.multiworld.state
+        if "Y-wing" in self.world.starting_ships:
+            self.skipTest("this seed starts with the Y-wing")
         self.collect_by_name(["Assault on Kile II Pass", "X-wing", "Millennium Falcon"])
         self.assertFalse(self.can_reach_region("Assault on Kile II"))
         self.collect_by_name(["Y-wing"])
