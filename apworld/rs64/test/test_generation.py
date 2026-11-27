@@ -1,7 +1,7 @@
 from BaseClasses import ItemClassification
 
 from .. import data
-from ..items import MISSION_PASSES, UPGRADES
+from ..items import EXTRAS, LENIENCY, MISSION_PASSES, UPGRADES
 from . import RS64TestBase
 
 
@@ -45,9 +45,9 @@ class TestMinimum(RS64TestBase):
         self.assertEqual(_location_count(self.world), 38)
         own = [i for i in self.multiworld.itempool if i.player == self.player]
         self.assertEqual(len(own), 38)
-        non_filler = [i for i in own if i.name in MISSION_PASSES or i.name in UPGRADES
+        non_filler = [i for i in own if i.name in MISSION_PASSES or i.name in UPGRADES or i.name in EXTRAS
                       or i.name in self.world.item_name_groups["Ships"]]
-        self.assertLessEqual(len(non_filler), 34)
+        self.assertLessEqual(len(non_filler), 35)
 
 
 class TestGold(RS64TestBase):
@@ -117,3 +117,19 @@ class TestShipLogicAny(RS64TestBase):
     def test_all_ships_progression(self) -> None:
         self.assertEqual(self.world.create_item("Naboo N-1 Starfighter").classification,
                          ItemClassification.progression)
+
+
+class TestNewItems(RS64TestBase):
+    def test_replenishing_in_pool_and_useful(self) -> None:
+        names = [i.name for i in self.multiworld.itempool if i.player == self.player]
+        self.assertEqual(names.count("Replenishing Secondaries"), 1)
+        self.assertEqual(self.world.create_item("Replenishing Secondaries").classification, ItemClassification.useful)
+
+    def test_every_leniency_once_at_default(self) -> None:
+        names = [i.name for i in self.multiworld.itempool if i.player == self.player]
+        for name in LENIENCY:
+            self.assertEqual(names.count(name), 1, name)
+            self.assertEqual(self.world.create_item(name).classification, ItemClassification.filler)
+
+    def test_invincibility_is_filler(self) -> None:
+        self.assertEqual(self.world.create_item("Temporary Invincibility").classification, ItemClassification.filler)

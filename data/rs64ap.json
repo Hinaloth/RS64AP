@@ -340,7 +340,29 @@
       "name": "Hull Repair",
       "effect": "repair",
       "weight": 1
+    },
+    {
+      "index": 4,
+      "name": "Temporary Invincibility",
+      "effect": "invincible",
+      "weight": 2
     }
   ],
-  "max_objectives_per_mission": 10
+  "max_objectives_per_mission": 10,
+  "extras": [
+    {
+      "index": 1,
+      "name": "Replenishing Secondaries",
+      "effect": "regen_secondary",
+      "classification": "useful",
+      "//": "+1 secondary every regen_seconds of mission time, up to the craft's max"
+    }
+  ],
+  "regen_seconds": 15,
+  "invincibility_seconds": 15,
+  "leniency": {
+    "//": "One filler item per mission: its medal requirements get easier at the debrief. Time limit x time_scale; kills, accuracy, friendlies x need_scale; bonuses unchanged.",
+    "time_scale": 1.5,
+    "need_scale": 0.6667
+  }
 }

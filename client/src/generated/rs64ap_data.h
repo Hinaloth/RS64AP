@@ -10,8 +10,12 @@ constexpr int64_t kIdBase = 640000;
 constexpr int kMissionCount = 19;
 constexpr int kShipCount = 9;
 constexpr int kUpgradeCount = 8;
-constexpr int kFillerCount = 3;
+constexpr int kFillerCount = 4;
 constexpr int kMaxObjectives = 10;
+constexpr float kRegenSeconds = 15.0f;
+constexpr float kInvincibilitySeconds = 15.0f;
+constexpr float kLeniencyTimeScale = 1.5f;
+constexpr float kLeniencyNeedScale = 0.6667f;
 
 // Location slots within a mission: id = kIdBase + level * 100 + slot.
 constexpr int kSlotComplete = 0;
@@ -24,6 +28,9 @@ constexpr int64_t pass_item(int level) { return kIdBase + level + 1; }
 constexpr int64_t ship_item(int craft) { return kIdBase + 101 + craft; }
 constexpr int64_t upgrade_item(int bit) { return kIdBase + 201 + bit - 9; }
 constexpr int64_t filler_item(int index) { return kIdBase + 300 + index; }
+constexpr int64_t extra_item(int index) { return kIdBase + 250 + index; }
+constexpr int64_t leniency_item(int level) { return kIdBase + 400 + level; }
+constexpr int kExtraReplenishingSecondaries = 1;
 
 // 0 campaign, 1 final (campaign), 2 bonus.
 constexpr int kMissionKind[kMissionCount] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2};
@@ -79,6 +86,7 @@ constexpr Filler kFiller[kFillerCount] = {
     {1, "Extra Life", "life"},
     {2, "Secondary Refill", "secondary"},
     {3, "Hull Repair", "repair"},
+    {4, "Temporary Invincibility", "invincible"},
 };
 
 }  // namespace rs64ap::data

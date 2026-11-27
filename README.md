@@ -4,7 +4,9 @@ Archipelago Randomizer Implementation for RogueSquadron64Recomp
 An [Archipelago](https://archipelago.gg) multiworld randomizer for *Star Wars: Rogue Squadron* (N64), played on
 [RogueSquadron64Recomp](https://github.com/MikeSemicolonD/RogueSquadron64Recomp).
 
-- **Items:** 19 Mission Passes (campaign and bonus missions), 9 ships (Naboo N-1 and T-16 included), 8 upgrades, filler.
+- **Items:** 19 Mission Passes (campaign and bonus missions), 9 ships (Naboo N-1 and T-16 included), 8 upgrades,
+  Replenishing Secondaries, a Medal Leniency per mission, and filler (Extra Life, Secondary Refill, Hull Repair,
+  Temporary Invincibility).
 - **Checks:** mission completions, medals (bronze / silver / gold), hidden upgrade pickups, and later objectives.
 - **Goal:** finish The Battle of Calamari, or finish a set number of missions.
 

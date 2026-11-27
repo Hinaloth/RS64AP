@@ -31,7 +31,11 @@ Either complete The Battle of Calamari, or complete a set number of missions (ca
   Naboo N-1 Starfighter.
 - 8 upgrades: Advanced Lasers, Advanced Concussion Missiles, Seeker Concussion Missiles, Advanced Proton Torpedoes,
   Seeker Proton Torpedoes, Seeker Cluster Missiles, Advanced Bombs and Advanced Shields.
-- Filler: Extra Life, Secondary Refill, Hull Repair. Filler waits until you are flying a mission.
+- Replenishing Secondaries: one secondary weapon back every 15 seconds in missions.
+- Medal Leniency, one per mission: that mission's medals get about a third easier (more time allowed, fewer kills,
+  lower accuracy and friendlies needed).
+- Filler: Extra Life, Secondary Refill, Hull Repair, Temporary Invincibility (15 seconds). Filler waits until you
+  are flying a mission.
 
 ## What does another world's item look like in Rogue Squadron?
 

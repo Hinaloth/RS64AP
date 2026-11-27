@@ -32,7 +32,15 @@ Star Wars Rogue Squadron:
   starting_missions: 2
   medal_checks: silver
   upgrade_pickups: true
-"""
+  start_inventory:
+    Replenishing Secondaries: 1
+    Temporary Invincibility: 1
+""" + "".join(f"    {m} Medal Leniency: 1\n" for m in (
+    "Ambush at Mos Eisley", "Rendezvous on Barkhesh", "The Search for the Nonnah", "Defection at Corellia",
+    "Liberation of Gerrard V", "The Jade Moon", "Imperial Construction Yards", "Assault on Kile II",
+    "Rescue on Kessel", "Prisons of Kessel", "Battle Above Taloraan", "Escape from Fest", "Blockade on Chandrila",
+    "Raid on Sullust", "Moff Seerdon's Revenge", "The Battle of Calamari", "Beggar's Canyon",
+    "The Death Star Trench Run", "The Battle of Hoth"))
 
 
 def main() -> int:

@@ -76,7 +76,8 @@ const char* config_string(const char*, const char* opt) {
 }
 const char* mod_data_dir(const char*) { return g_data_dir.c_str(); }
 int save_slot() { return g_save_slot; }
-float mission_seconds() { return 0.0f; }
+float g_mission_time = 0.0f;
+float mission_seconds() { return g_mission_time; }
 
 void fire(uint32_t hook, Regs* regs = nullptr) {
     Regs local{};
@@ -219,17 +220,82 @@ int main(int argc, char** argv) {
     // Fly the mission: a pickup, a stray upgrade bit that must be reverted, success.
     wb(RAM, a::kCurrentLevel, (uint8_t)level);
     wb(RAM, a::kLives, 3);
+    wb(RAM, a::kSecondary, 0);
+    wb(RAM, a::kSecondaryMax, 4);
+    g_mission_time = 0.0f;
     fire(RS64_HOOK_MISSION_INIT);
     fire(RS64_HOOK_MISSION_READY);
     frames(3, RS64_HOOK_MISSION_FRAME_NPCS);
+
+    // Replenishing Secondaries (start inventory): +1 after 15 s, none before.
+    g_mission_time = 14.0f;
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    expect(rb(RAM, a::kSecondary) == 0, "no secondary regen before 15 s");
+    g_mission_time = 15.5f;
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    expect(rb(RAM, a::kSecondary) == 1, "secondary regen +1 at 15 s (count %u)", rb(RAM, a::kSecondary));
+    wb(RAM, a::kSecondary, 0xFF);
+    g_mission_time = 31.0f;
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    expect(rb(RAM, a::kSecondary) == 0xFF, "unlimited (0xFF) secondaries left alone");
+
+    // Temporary Invincibility (start inventory, filler): applied from the queue, then damage is zeroed for 15 s.
+    auto damage = [&](float dmg) {
+        Regs dr{};
+        dr.r[kA0] = a::kPlayerCraft;
+        dr.r[kA1] = float_bits(dmg);
+        fire(RS64_HOOK_PLAYER_DAMAGE, &dr);
+        return (uint32_t)dr.r[kA1];
+    };
+    expect(damage(5.0f) == float_bits(5.0f), "damage passes before invincibility");
+    g_mission_time = 40.0f;
+    bool invincible = false;
+    for (int i = 0; i < 400 && !invincible; ++i) {
+        frames(1, RS64_HOOK_MISSION_FRAME_NPCS);
+        invincible = damage(5.0f) == 0;
+    }
+    expect(invincible, "Temporary Invincibility zeroes player damage");
+    g_mission_time = 54.0f;
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    expect(damage(5.0f) == 0, "still invincible at 14 s");
+    g_mission_time = 56.0f;
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    expect(damage(5.0f) == float_bits(5.0f), "invincibility over after 15 s");
     ww(RAM, a::kSettingsWord, rw(RAM, a::kSettingsWord) | 0x10000u);  // the pickup's own grant
     Regs pick{};
     pick.r[kS1] = 0x80600000u;
     fire(RS64_HOOK_POWERUP_COLLECT, &pick);
     frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
     expect((rw(RAM, a::kSettingsWord) & 0x10000u) == 0, "picked-up upgrade bit reverted");
+    // Medal Leniency (start inventory): a fake medal table the debrief would read.
+    const uint32_t table = 0x80650000u;
+    for (uint32_t lv = 0; lv < 19; ++lv) {
+        for (uint32_t t = 0; t < 3; ++t) {
+            const uint32_t rec = table + lv * 0x24u + t * 0xCu;
+            wf(RAM, rec, 10.0f);
+            const uint16_t v[4] = {30, 60, 9, 1};
+            for (int k = 0; k < 4; ++k) { wb(RAM, rec + 4 + 2 * k, (uint8_t)(v[k] >> 8)); wb(RAM, rec + 5 + 2 * k, (uint8_t)v[k]); }
+        }
+    }
+    ww(RAM, a::kMedalInfoPtr, table);
+
     fire(RS64_HOOK_RESULT_SUCCESS);
     fire(RS64_HOOK_MISSION_END);
+    frames(1);
+    const uint32_t eased = rw(RAM, a::kMedalInfoPtr);
+    expect(eased != table, "debrief medal table swapped for the leniency copy");
+    {
+        const uint32_t rec = eased + (uint32_t)level * 0x24u + 0xCu;  // silver
+        auto u16 = [&](uint32_t at) { return (rb(RAM, at) << 8) | rb(RAM, at + 1); };
+        expect(rf(RAM, rec) == 15.0f && u16(rec + 4) == 20 && u16(rec + 6) == 40 && u16(rec + 8) == 6 && u16(rec + 10) == 1,
+               "silver eased: %.1f min, kills %d, acc %d, friendlies %d, bonus %d", rf(RAM, rec), u16(rec + 4),
+               u16(rec + 6), u16(rec + 8), u16(rec + 10));
+        const uint32_t other = eased + (uint32_t)((level + 1) % 19) * 0x24u;
+        expect(rf(RAM, other) == 10.0f && u16(other + 4) == 30, "other levels untouched");
+    }
+    Regs back{};
+    fire(RS64_HOOK_MISSION_SELECT_INIT, &back);
+    expect(rw(RAM, a::kMedalInfoPtr) == table, "medal table pointer restored at mission select");
 
     // Debrief writes a silver medal for the level.
     const uint32_t medal_byte = acct + a::kAcctMedals + (uint32_t)(level >> 2);

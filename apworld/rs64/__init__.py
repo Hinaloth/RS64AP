@@ -11,8 +11,8 @@ from rule_builder.rules import Has, HasAny, HasFromList, True_
 from worlds.AutoWorld import WebWorld, World
 
 from . import data
-from .items import (FILLER, FILLER_WEIGHTS, ITEM_GROUPS, MISSION_CLEARED, MISSION_PASSES, SHIPS, UPGRADES, VICTORY,
-                    RS64Item, base_classification)
+from .items import (EXTRAS, FILLER, FILLER_WEIGHTS, ITEM_GROUPS, LENIENCY, MISSION_CLEARED, MISSION_PASSES, SHIPS,
+                    UPGRADES, VICTORY, RS64Item, base_classification)
 from .locations import LOCATION_GROUPS, RS64Location, complete, medal, objective, pickup
 from .options import RS64Options
 
@@ -130,11 +130,14 @@ class RS64World(World):
 
     def create_items(self) -> None:
         started = {MISSION_PASSES[level] for level in self.starting_missions} | set(self.starting_ships)
-        pool = [self.create_item(name) for name in MISSION_PASSES + SHIPS + UPGRADES if name not in started]
+        pool = [self.create_item(name) for name in MISSION_PASSES + SHIPS + UPGRADES + EXTRAS if name not in started]
 
         slots = len(self.multiworld.get_unfilled_locations(self.player))
         if len(pool) > slots:
             raise OptionError(f"{self.player_name}: {len(pool)} items but only {slots} locations.")
+        # Filler: one Medal Leniency per mission first (as many as fit), then the generic filler.
+        leniency = self.random.sample(LENIENCY, min(len(LENIENCY), slots - len(pool)))
+        pool += [self.create_item(name) for name in leniency]
         pool += [self.create_filler() for _ in range(slots - len(pool))]
         self.multiworld.itempool += pool
 

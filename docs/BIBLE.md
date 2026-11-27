@@ -198,6 +198,8 @@ From `ghost_lobby.cpp` and `docs/engine/modding-host-api.md`:
 | Mission passes | 19 | progression | One per mission, bonus missions included |
 | Ships | 9 | progression | X-wing, Y-wing, A-wing, V-wing, Snowspeeder, Falcon, TIE Interceptor, T-16, Naboo N-1 |
 | Upgrades | 8 | useful | One per upgrade bit, not progressive |
+| Replenishing Secondaries | 1 | useful | +1 secondary every 15 s of mission time, up to the craft's max |
+| Medal Leniency | 19 | filler | One per mission: that mission's medal requirements a third easier. Placed first when filler slots are filled, as many as fit |
 | Filler | rest | filler | Only applied during an active mission |
 | Traps | 0 | | None |
 
@@ -222,6 +224,15 @@ item per second so each gets its own message.
 | Extra Life | `numLives += 1` (cap 9) | 3 |
 | Secondary Refill | secondary count = max (`gMissionState+0x02` = `+0x03`) | 2 |
 | Hull Repair | restore the player craft's health | 1 |
+| Temporary Invincibility | 15 s of no damage to player 1, by zeroing damage in `RS64_HOOK_PLAYER_DAMAGE`; a received DeathLink still kills | 2 |
+
+**Medal Leniency [DECIDED].** Owned for a mission, the debrief after it reads an eased copy of the medal table
+(pointer `0x800D03DC`, `0x24` bytes per level: three `0xC` records of f32 minutes, then u16 kills, accuracy,
+friendlies, bonuses). The time limit is ×1.5; kills, accuracy and friendlies are ×⅔ (rounded down); bonuses are
+unchanged. The client copies the whole table, eases that level, points the game at the copy on the first front-end
+frame after the mission, and restores it at the next mission select or mission. The recomp's mod levels swap the
+same pointer at `postLevelStatScreen`. Whether that first front-end frame comes before the debrief scores the
+mission still needs an in-game check (the `[rs64ap] probe leniency` log line).
 
 Whether lives carry between missions changes how Extra Life feels **[SPIKE S8]**. Hull Repair needs
 the craft health field **[SPIKE S8]**; drop it if that takes too long.
@@ -253,13 +264,13 @@ the craft health field **[SPIKE S8]**; drop it if that takes too long.
 ### 4.3 Item / location budget
 
 Worst case for items: one starting mission and one starting ship:
-18 passes + 8 ships + 8 upgrades = **34** non-filler items.
+18 passes + 8 ships + 8 upgrades + Replenishing Secondaries = **35** non-filler items.
 
 | Settings | Locations | Spare for filler |
 | --- | ---: | ---: |
-| Minimum: complete + bronze | 38 | 4 |
-| Default: complete + silver + pickups | 67 | 33 |
-| Max (no objectives): complete + gold + pickups | 86 | 52 |
+| Minimum: complete + bronze | 38 | 3 |
+| Default: complete + silver + pickups | 67 | 32 |
+| Max (no objectives): complete + gold + pickups | 86 | 51 |
 
 The minimum always fits, which is why `medal_checks` has no off. Each extra starting mission takes
 one pass, and sometimes one ship, out of the pool. The apworld still asserts
@@ -572,7 +583,9 @@ Base `640000` (`64` for RS64; AP IDs only need to be unique within a game).
 | 1–19 | Mission passes, `n = level + 1` |
 | 101–109 | Ships, `n = 101 + craft id` |
 | 201–208 | Upgrades, `n = 201 + bit index − 9` |
-| 301+ | Filler |
+| 251+ | Other useful items (251 Replenishing Secondaries) |
+| 301+ | Filler (304 Temporary Invincibility) |
+| 400–418 | Medal Leniency, `n = 400 + level` |
 
 **Locations** `640000 + level × 100 + slot`:
 
@@ -732,4 +745,5 @@ Using Archipelago's `WorldTestBase`:
 | 2026-11-27 | Game name `Star Wars Rogue Squadron` (no colon). |
 | 2026-11-27 | Licenses: `client/` GPL-3.0-or-later (follows the recomp), everything else MIT. |
 | 2026-11-27 | `minimum_ap_version` 0.6.8. |
+| 2026-11-27 | New items: Replenishing Secondaries (useful, 1 per 15 s), Temporary Invincibility (filler, 15 s, damage-hook method), Medal Leniency per mission (filler, a third easier). No Wingmen Health item. |
 | 2026-11-27 | Per-mission default and replay ships recorded from play. `ship_logic` option: `default_only` (default) until replay ships are confirmed launchable on a first visit, then `any_listed` is available. |

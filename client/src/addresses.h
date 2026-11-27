@@ -61,6 +61,10 @@ constexpr uint32_t kMsCursor = 0x800CDAC1u;       // u8, stock level id under th
 constexpr uint32_t kMsPort = 0x800CDAC8u;         // u8, controller port driving the screen
 constexpr uint32_t kMsUnlocked = 0x800CDAD0u;     // u32, selectable levels  SPIKE S2
 
+// Menu overlay: debrief medal requirements (mods: src/game/mod_content/mod_level_hooks.cpp)
+constexpr uint32_t kMedalInfoPtr = 0x800D03DCu;   // u32 pointer to medal_info[level * 3 + tier]
+constexpr uint32_t kMedalLevelStride = 0x24u;     // three 0xC records per level
+
 // Menu overlay: hangar (craft select)
 constexpr uint32_t kHangarPort = 0x800CD6D0u;     // u8
 constexpr uint32_t kHangarAllowed = 0x800CD6D8u;  // u32, bit n = craft n may launch  SPIKE S3

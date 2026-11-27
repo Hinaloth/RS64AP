@@ -56,7 +56,14 @@ FILLER: list[dict[str, Any]] = [
     {'index': 1, 'name': 'Extra Life', 'effect': 'life', 'weight': 3},
     {'index': 2, 'name': 'Secondary Refill', 'effect': 'secondary', 'weight': 2},
     {'index': 3, 'name': 'Hull Repair', 'effect': 'repair', 'weight': 1},
+    {'index': 4, 'name': 'Temporary Invincibility', 'effect': 'invincible', 'weight': 2},
 ]
+
+EXTRAS: list[dict[str, Any]] = [
+    {'index': 1, 'name': 'Replenishing Secondaries', 'effect': 'regen_secondary', 'classification': 'useful'},
+]
+
+LENIENCY: list[str] = ['Ambush at Mos Eisley Medal Leniency', 'Rendezvous on Barkhesh Medal Leniency', 'The Search for the Nonnah Medal Leniency', 'Defection at Corellia Medal Leniency', 'Liberation of Gerrard V Medal Leniency', 'The Jade Moon Medal Leniency', 'Imperial Construction Yards Medal Leniency', 'Assault on Kile II Medal Leniency', 'Rescue on Kessel Medal Leniency', 'Prisons of Kessel Medal Leniency', 'Battle Above Taloraan Medal Leniency', 'Escape from Fest Medal Leniency', 'Blockade on Chandrila Medal Leniency', 'Raid on Sullust Medal Leniency', "Moff Seerdon's Revenge Medal Leniency", 'The Battle of Calamari Medal Leniency', "Beggar's Canyon Medal Leniency", 'The Death Star Trench Run Medal Leniency', 'The Battle of Hoth Medal Leniency']
 
 ITEM_IDS: dict[str, int] = {
     'Ambush at Mos Eisley Pass': 640001,
@@ -98,6 +105,27 @@ ITEM_IDS: dict[str, int] = {
     'Extra Life': 640301,
     'Secondary Refill': 640302,
     'Hull Repair': 640303,
+    'Temporary Invincibility': 640304,
+    'Replenishing Secondaries': 640251,
+    'Ambush at Mos Eisley Medal Leniency': 640400,
+    'Rendezvous on Barkhesh Medal Leniency': 640401,
+    'The Search for the Nonnah Medal Leniency': 640402,
+    'Defection at Corellia Medal Leniency': 640403,
+    'Liberation of Gerrard V Medal Leniency': 640404,
+    'The Jade Moon Medal Leniency': 640405,
+    'Imperial Construction Yards Medal Leniency': 640406,
+    'Assault on Kile II Medal Leniency': 640407,
+    'Rescue on Kessel Medal Leniency': 640408,
+    'Prisons of Kessel Medal Leniency': 640409,
+    'Battle Above Taloraan Medal Leniency': 640410,
+    'Escape from Fest Medal Leniency': 640411,
+    'Blockade on Chandrila Medal Leniency': 640412,
+    'Raid on Sullust Medal Leniency': 640413,
+    "Moff Seerdon's Revenge Medal Leniency": 640414,
+    'The Battle of Calamari Medal Leniency': 640415,
+    "Beggar's Canyon Medal Leniency": 640416,
+    'The Death Star Trench Run Medal Leniency': 640417,
+    'The Battle of Hoth Medal Leniency': 640418,
 }
 
 LOCATION_IDS: dict[str, int] = {
