@@ -46,8 +46,8 @@ class ShipLogic(Choice):
     """Which ships the logic lets you fly a mission with.
 
     default_only: only the mission's default ship (vanilla: the other ships open after a first completion).
-    any_listed: the default ship or any ship vanilla allows on a replay. Needs the game to offer those ships on a first
-    visit, which is not confirmed yet."""
+    any_listed: the default ship or any ship vanilla allows on a replay, even on a first visit. Some of those ships
+    make a mission much harder than its default one."""
     display_name = "Ship Logic"
     option_default_only = 0
     option_any_listed = 1

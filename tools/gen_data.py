@@ -3,7 +3,9 @@
 
 Usage:
     python tools/gen_data.py          write both files
-    python tools/gen_data.py --check  exit 1 if either file is stale (for CI)
+    python tools/gen_data.py --check  exit 1 if a generated file is stale (for CI)
+
+It also copies SETUP.md to apworld/rs64/docs/setup_en.md.
 """
 from __future__ import annotations
 
@@ -182,6 +184,8 @@ def main() -> int:
     d = json.loads(SRC.read_text(encoding="utf-8"))
     check(d)
     outputs = {PY_OUT: py_source(d), H_OUT: h_source(d)}
+    # The apworld's setup guide (shown by Archipelago) is a copy of the repo's SETUP.md.
+    outputs[ROOT / "apworld" / "rs64" / "docs" / "setup_en.md"] = (ROOT / "SETUP.md").read_text(encoding="utf-8")
     if "--check" in sys.argv:
         stale = [p for p, text in outputs.items() if not p.exists() or p.read_text(encoding="utf-8") != text]
         for p in stale:
