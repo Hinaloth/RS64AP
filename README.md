@@ -30,7 +30,6 @@ A full seed has been played from start to goal on Windows against archipelago.gg
 | Not yet | |
 | --- | --- |
 | Objective checks (**WIP**) | The `objective_checks` option exists but isn't usable yet: it needs each mission's objective count and how objectives map to the game's flags (being collected with the probe, see below). Generation stops with an error if it's turned on, so leave it `false` |
-| The Battle of Hoth's ships | Assumed Snowspeeder only |
 | DeathLink | Built and tested without the game only |
 | Linux client | Built on Ubuntu 24.04 and tested without the game; not yet run with the Linux recomp |
 

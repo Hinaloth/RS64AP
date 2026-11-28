@@ -181,7 +181,9 @@ def write_counts(found: dict[int, int], complete: bool) -> None:
     for m in d["missions"]:
         if m["id"] in found:
             m["objectives"] = found[m["id"]]
-    d["verified"]["objectives"] = complete
+    # Counts alone don't make the option usable: which flag bit each objective sets still has to be confirmed
+    # (verified.objectives, set by hand once play logs show the bits).
+    d["verified"]["objective_counts"] = complete
     DATA.write_text(json.dumps(d, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"\nWrote {len(found)} objective count(s) to {DATA.relative_to(ROOT)}")
     subprocess.run([sys.executable, str(ROOT / "tools" / "gen_data.py")], check=True)

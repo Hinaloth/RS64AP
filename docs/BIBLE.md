@@ -72,7 +72,8 @@ every vanilla unlock path (medals, passcodes, debrief rewards); it overwrites th
 ### 2.1 Missions (level ids)
 
 Ids from `src/main/discord_presence.cpp`. Ships from play (2026-11-27): the default ship is the one the first flight
-uses; replay ships are the ones vanilla adds after a completion. Hoth wasn't listed and is assumed Snowspeeder only.
+uses; replay ships are the ones vanilla adds after a completion. The probe's craft masks (2026-11-28) confirm every
+default ship and Hoth as Snowspeeder only. Objective counts are in `data/rs64ap.json`.
 
 | Id | Mission | Kind | Default ship | Replay ships | Upgrade pickup |
 | ---: | --- | --- | --- | --- | --- |
@@ -94,7 +95,7 @@ uses; replay ships are the ones vanilla adds after a completion. Hoth wasn't lis
 | 15 | The Battle of Calamari | campaign (final) | V-wing | X, A, Falcon, TIE, N-1 | |
 | 16 | Beggar's Canyon | bonus | T-16 Skyhopper | none | |
 | 17 | The Death Star Trench Run | bonus | X-wing | none | |
-| 18 | The Battle of Hoth | bonus | Snowspeeder (assumed) | none | |
+| 18 | The Battle of Hoth | bonus | Snowspeeder | none | |
 | 20 | CHICKEN (AT-ST passcode level) | not in AP | | | |
 
 The pickup column comes from the recordings README, which lists 10 levels whose run collects or
@@ -748,6 +749,7 @@ Using Archipelago's `WorldTestBase`:
 | 2026-11-27 | Game name `Star Wars Rogue Squadron` (no colon). |
 | 2026-11-27 | Licenses: `client/` GPL-3.0-or-later (follows the recomp), everything else MIT. |
 | 2026-11-27 | `minimum_ap_version` 0.6.8. |
+| 2026-11-28 | First probe run (`probe.py collect`, all 19 missions). Objective counts: Mos Eisley 4, Barkhesh 1, Nonnah 2, Corellia 4, Gerrard V 3, Jade Moon 3, Construction Yards 3, Kile II 3, Rescue on Kessel 2, Prisons of Kessel 2, Taloraan 2, Fest 4, Chandrila 2, Sullust 2, Seerdon's Revenge 4, Calamari 2, Beggar's Canyon 1, Trench Run 2, Hoth 3 (49 in all), now in `data/rs64ap.json`. Several missions start with hidden-objective bits set, some at or past their count (Nonnah: 2 objectives, hidden `0x04`), so objective n isn't simply bit n-1: `objective_checks` stays locked until play logs show each objective's bit. `ConsiderUnlocks` craft masks equal every mission's default ship; `IgnoreUnlocks` gives the vanilla list without Falcon/TIE/N-1 and confirms Hoth is Snowspeeder only. An abort ends with result 0 and costs a life, and lives carry over between missions (3, 2, 1, then back to 3), so Extra Life lasts. |
 | 2026-11-28 | Game-data collection moved out of the AP client into `probes/rs64ap-probe` (a log-only mod writing `mod_data/rs64ap-probe/probe.log`) and `tools/probe.py`. `collect` uses the recomp's own boot-target navigation (`ROGUESQ_BOOT_TARGET=abort:0` + `ROGUESQ_NAV_ABORT_LOOP=16`, then `abort:16-18` with the bonus passcodes via `ROGUESQ_CHEATS`) to enter and abort every mission unattended, giving objective counts (S6) and craft masks (S1). Objective order, hidden flags and medal writes come from normal play with the probe on (`parse`). `parse --write` fills `data/rs64ap.json`. |
 | 2026-11-28 | Auto-reconnect only when the settings' server (and slot) match the pilot's last server; otherwise the ARCHIPELAGO page waits for CONNECT, which then records the new server. The page continues to mission select only after CONNECT or that auto-reconnect, so FORGET PILOT SEED is reachable. |
 | 2026-11-28 | Medal checks now arrive ~6 s after Complete (debrief scan); the N-1 launches on a first visit. Pilot files record the game's pilot ID and initials: a pilot deleted and recreated in the same slot is unbound (old file kept as `.bak`). On connect the server's checked set replaces the file's; checks the room lacks are re-sent, and a diverging item list resyncs from the first difference (re-hosting the same seed). The goal is reported on every connection. |

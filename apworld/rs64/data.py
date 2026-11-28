@@ -4,29 +4,29 @@ from typing import Any
 GAME: str = 'Star Wars Rogue Squadron'
 WORLD_VERSION: str = '0.1.0'
 ID_BASE: int = 640000
-VERIFIED: dict[str, bool] = {'allowed_ships': True, 'pickups': False, 'objectives': False}
+VERIFIED: dict[str, bool] = {'allowed_ships': True, 'pickups': False, 'objectives': False, 'objective_counts': True}
 MAX_OBJECTIVES: int = 10
 
 MISSIONS: list[dict[str, Any]] = [
-    {'id': 0, 'name': 'Ambush at Mos Eisley', 'kind': 'campaign', 'pickup': False, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
-    {'id': 1, 'name': 'Rendezvous on Barkhesh', 'kind': 'campaign', 'pickup': False, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
-    {'id': 2, 'name': 'The Search for the Nonnah', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'A-wing', 'replay_ships': ['X-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
-    {'id': 3, 'name': 'Defection at Corellia', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'Snowspeeder', 'replay_ships': []},
-    {'id': 4, 'name': 'Liberation of Gerrard V', 'kind': 'campaign', 'pickup': False, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
-    {'id': 5, 'name': 'The Jade Moon', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
-    {'id': 6, 'name': 'Imperial Construction Yards', 'kind': 'campaign', 'pickup': False, 'objectives': None, 'default_ship': 'Snowspeeder', 'replay_ships': []},
-    {'id': 7, 'name': 'Assault on Kile II', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'Y-wing', 'replay_ships': ['Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
-    {'id': 8, 'name': 'Rescue on Kessel', 'kind': 'campaign', 'pickup': False, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': []},
-    {'id': 9, 'name': 'Prisons of Kessel', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
-    {'id': 10, 'name': 'Battle Above Taloraan', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'A-wing', 'replay_ships': ['X-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
-    {'id': 11, 'name': 'Escape from Fest', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'Snowspeeder', 'replay_ships': []},
-    {'id': 12, 'name': 'Blockade on Chandrila', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
-    {'id': 13, 'name': 'Raid on Sullust', 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'Y-wing', 'replay_ships': ['Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
-    {'id': 14, 'name': "Moff Seerdon's Revenge", 'kind': 'campaign', 'pickup': True, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
-    {'id': 15, 'name': 'The Battle of Calamari', 'kind': 'final', 'pickup': False, 'objectives': None, 'default_ship': 'V-wing', 'replay_ships': ['X-wing', 'A-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
-    {'id': 16, 'name': "Beggar's Canyon", 'kind': 'bonus', 'pickup': False, 'objectives': None, 'default_ship': 'T-16 Skyhopper', 'replay_ships': []},
-    {'id': 17, 'name': 'The Death Star Trench Run', 'kind': 'bonus', 'pickup': False, 'objectives': None, 'default_ship': 'X-wing', 'replay_ships': []},
-    {'id': 18, 'name': 'The Battle of Hoth', 'kind': 'bonus', 'pickup': False, 'objectives': None, 'default_ship': 'Snowspeeder', 'replay_ships': []},
+    {'id': 0, 'name': 'Ambush at Mos Eisley', 'kind': 'campaign', 'pickup': False, 'objectives': 4, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 1, 'name': 'Rendezvous on Barkhesh', 'kind': 'campaign', 'pickup': False, 'objectives': 1, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 2, 'name': 'The Search for the Nonnah', 'kind': 'campaign', 'pickup': True, 'objectives': 2, 'default_ship': 'A-wing', 'replay_ships': ['X-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 3, 'name': 'Defection at Corellia', 'kind': 'campaign', 'pickup': True, 'objectives': 4, 'default_ship': 'Snowspeeder', 'replay_ships': []},
+    {'id': 4, 'name': 'Liberation of Gerrard V', 'kind': 'campaign', 'pickup': False, 'objectives': 3, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 5, 'name': 'The Jade Moon', 'kind': 'campaign', 'pickup': True, 'objectives': 3, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 6, 'name': 'Imperial Construction Yards', 'kind': 'campaign', 'pickup': False, 'objectives': 3, 'default_ship': 'Snowspeeder', 'replay_ships': []},
+    {'id': 7, 'name': 'Assault on Kile II', 'kind': 'campaign', 'pickup': True, 'objectives': 3, 'default_ship': 'Y-wing', 'replay_ships': ['Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 8, 'name': 'Rescue on Kessel', 'kind': 'campaign', 'pickup': False, 'objectives': 2, 'default_ship': 'X-wing', 'replay_ships': []},
+    {'id': 9, 'name': 'Prisons of Kessel', 'kind': 'campaign', 'pickup': True, 'objectives': 2, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 10, 'name': 'Battle Above Taloraan', 'kind': 'campaign', 'pickup': True, 'objectives': 2, 'default_ship': 'A-wing', 'replay_ships': ['X-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 11, 'name': 'Escape from Fest', 'kind': 'campaign', 'pickup': True, 'objectives': 4, 'default_ship': 'Snowspeeder', 'replay_ships': []},
+    {'id': 12, 'name': 'Blockade on Chandrila', 'kind': 'campaign', 'pickup': True, 'objectives': 2, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 13, 'name': 'Raid on Sullust', 'kind': 'campaign', 'pickup': True, 'objectives': 2, 'default_ship': 'Y-wing', 'replay_ships': ['Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 14, 'name': "Moff Seerdon's Revenge", 'kind': 'campaign', 'pickup': True, 'objectives': 4, 'default_ship': 'X-wing', 'replay_ships': ['A-wing', 'V-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 15, 'name': 'The Battle of Calamari', 'kind': 'final', 'pickup': False, 'objectives': 2, 'default_ship': 'V-wing', 'replay_ships': ['X-wing', 'A-wing', 'Millennium Falcon', 'TIE Interceptor', 'Naboo N-1 Starfighter']},
+    {'id': 16, 'name': "Beggar's Canyon", 'kind': 'bonus', 'pickup': False, 'objectives': 1, 'default_ship': 'T-16 Skyhopper', 'replay_ships': []},
+    {'id': 17, 'name': 'The Death Star Trench Run', 'kind': 'bonus', 'pickup': False, 'objectives': 2, 'default_ship': 'X-wing', 'replay_ships': []},
+    {'id': 18, 'name': 'The Battle of Hoth', 'kind': 'bonus', 'pickup': False, 'objectives': 3, 'default_ship': 'Snowspeeder', 'replay_ships': []},
 ]
 
 SHIPS: list[dict[str, Any]] = [

@@ -61,9 +61,10 @@ class RS64World(World):
     # ---- generation -------------------------------------------------------------------------------------------
 
     def generate_early(self) -> None:
-        if self.options.objective_checks and any(m["objectives"] is None for m in data.MISSIONS):
-            raise OptionError(f"{self.player_name}: Objective Checks is not available yet "
-                              "(per-mission objective counts are still unknown). Turn it off.")
+        if self.options.objective_checks and (not data.VERIFIED.get("objectives")
+                                              or any(m["objectives"] is None for m in data.MISSIONS)):
+            raise OptionError(f"{self.player_name}: Objective Checks is not available yet (work in progress: "
+                              "which game flag each objective sets is still being mapped). Turn it off.")
         if self.options.ship_logic == self.options.ship_logic.option_any_listed:
             logger.warning(f"RS64: {self.player_name} uses Ship Logic any_listed; flying a replay ship on a "
                            "mission's first visit is not confirmed in-game yet.")
