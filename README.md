@@ -69,6 +69,16 @@ the **rs64ap-probe** mod and `probe.py`, kept separate from the AP client. The p
 From the repository, `python tools/probe.py parse --log <probe.log> --write` puts the counts into
 `data/rs64ap.json` and regenerates the apworld and client data.
 
+## Testing DeathLink alone
+
+`tools/deathlink_tester.py` (Python 3.10+, `pip install websockets`) joins your slot as a second, chat-only
+connection with the DeathLink tag: press Enter to kill your ship, and deaths your game sends are printed. The seed
+needs `death_link: true`.
+
+```sh
+python tools/deathlink_tester.py --server archipelago.gg:38281 --slot <your slot> [--password ...]
+```
+
 ## Repository layout
 
 ```
@@ -81,7 +91,8 @@ probes/rs64ap-probe/ log-only data-collection mod (C++), not part of the client
   cmake/             MinGW-w64 toolchain for cross-building Windows from Linux
 data/rs64ap.json     missions, ships, upgrades, items, IDs: the single source of truth
 tools/               gen_data.py (codegen), e2e.py (end-to-end test), package.py (release zips),
-                     probe.py (drive the game with the probe mod, parse its log)
+                     probe.py (drive the game with the probe mod, parse its log),
+                     deathlink_tester.py (send/receive DeathLink without a second game)
 docs/BIBLE.md        design, game facts, decision log
 RS64AP.yaml          player options template
 ```
