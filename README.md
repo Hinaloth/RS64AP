@@ -48,7 +48,8 @@ python tools/package.py        # writes dist/rs64.apworld and dist/RS64AP.yaml
 
 ### Client mod
 
-Needs CMake 3.20+, a C++17 compiler and OpenSSL 3 (for `wss://`, which archipelago.gg uses). The other dependencies
+Needs CMake 3.20+, a C++17 compiler, OpenSSL 3 (for `wss://`, which archipelago.gg uses) and zlib (compressed
+connections; the server warns without it). The other dependencies
 (apclientpp, websocketpp, asio, nlohmann/json, and the recomp's `host_api.h`) are fetched at configure time.
 
 **Linux**
@@ -62,16 +63,17 @@ cmake --build build/client
 **Windows (MSVC + vcpkg)**
 
 ```powershell
-vcpkg install openssl:x64-windows-static
+vcpkg install openssl:x64-windows-static zlib:x64-windows-static
 cmake -S client -B build/client -A x64 -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static
 cmake --build build/client --config Release
 ```
 
-**Windows, cross-compiled from Linux (MinGW-w64)**: build OpenSSL 3 statically for `mingw64` first, then
+**Windows, cross-compiled from Linux (MinGW-w64)**: build OpenSSL 3 and zlib statically for MinGW first, then
 
 ```sh
 cmake -S client -B build/win -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_TOOLCHAIN_FILE=$PWD/client/cmake/mingw-w64-x86_64.cmake -DOPENSSL_ROOT_DIR=<mingw OpenSSL prefix>
+  -DCMAKE_TOOLCHAIN_FILE=$PWD/client/cmake/mingw-w64-x86_64.cmake -DOPENSSL_ROOT_DIR=<mingw OpenSSL prefix> \
+  -DZLIB_ROOT=<mingw zlib prefix> -DZLIB_USE_STATIC_LIBS=ON
 cmake --build build/win
 ```
 
