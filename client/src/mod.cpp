@@ -194,6 +194,9 @@ std::string pilot_path(int slot) {
     return std::string(dir) + "pilot_" + std::to_string(slot) + ".json";
 }
 
+// Medal sources as last seen, to log every change (where and when the game writes a medal is still unconfirmed).
+int g_seen_saved[d::kMissionCount] = {}, g_seen_live[d::kMissionCount] = {};
+
 // The pilot on the account screen changed: load its file, if it has one. A connection made for another pilot ends.
 void on_pilot(int slot) {
     save_file();
@@ -206,6 +209,8 @@ void on_pilot(int slot) {
     S.file = PilotFile{};
     S.file_path = slot >= 0 ? pilot_path(slot) : std::string();
     S.auto_connect_tried = false;
+    std::fill(std::begin(g_seen_saved), std::end(g_seen_saved), -1);
+    std::fill(std::begin(g_seen_live), std::end(g_seen_live), -1);
     if (!S.file_path.empty() && S.file.load(S.file_path)) {
         S.bound = true;
         logf("pilot %d is bound to seed %s (slot %s)", slot + 1, S.file.seed.c_str(), S.file.slot_name.c_str());
@@ -260,6 +265,24 @@ int best_medal(const uint8_t* rdram, int level) {
     const int saved = (rb(rdram, acct + a::kAcctMedals + (uint32_t)(level >> 2)) >> ((level & 3) * 2)) & 3;
     const int live = rb(rdram, a::kBestMedals + (uint32_t)level);
     return std::max(saved, live <= 3 ? live : 0);
+}
+
+
+void log_medal_changes(const uint8_t* rdram, const char* where) {
+    if (S.pilot_slot < 0) return;
+    const uint32_t acct = a::account(S.pilot_slot);
+    for (int lv = 0; lv < d::kMissionCount; ++lv) {
+        const int saved = (rb(rdram, acct + a::kAcctMedals + (uint32_t)(lv >> 2)) >> ((lv & 3) * 2)) & 3;
+        const int live = rb(rdram, a::kBestMedals + (uint32_t)lv);
+        if (g_seen_saved[lv] < 0) {  // first look at this pilot: just remember
+            g_seen_saved[lv] = saved;
+            g_seen_live[lv] = live;
+        } else if (saved != g_seen_saved[lv] || live != g_seen_live[lv]) {
+            logf("probe medal %s level=%d saved=%d->%d live=%d->%d", where, lv, g_seen_saved[lv], saved, g_seen_live[lv], live);
+            g_seen_saved[lv] = saved;
+            g_seen_live[lv] = live;
+        }
+    }
 }
 
 // A medal sends its own tier and every tier below it (all three always exist; the apworld puts filler in the tiers
@@ -410,6 +433,12 @@ void show_status(uint8_t* rdram, void* ctx, uint32_t slot, int y, const std::str
     *shown = text;
 }
 
+// Ships the seed's logic counts for a level: the default ship, plus the replay ships under ship_logic any_listed.
+// The hangar offers only these (owned ones), so a mission is never launched in a ship that can't win it.
+uint32_t logic_ships(int level) {
+    return d::kDefaultShip[level] | (S.ship_logic == 1 ? d::kReplayShips[level] : 0u);
+}
+
 // The furthest mission the player holds a pass for: SELECT LEVEL lists entries 0..this.
 int furthest_pass() {
     int far = -1;
@@ -420,10 +449,7 @@ int furthest_pass() {
 const char* lock_reason(int level) {
     if (level < 0 || level >= d::kMissionCount) return nullptr;
     if (!S.passes[level]) return "NO MISSION PASS";
-    // The game's own hangar list for the level when known, else the data table under the seed's Ship Logic.
-    const uint32_t table = d::kDefaultShip[level] | (S.ship_logic == 1 ? d::kReplayShips[level] : 0u);
-    const uint32_t mask = S.level_mask[level] ? S.level_mask[level] : table;
-    if (!(mask & S.ships)) return "NO SHIP FOR THIS MISSION";
+    if (!(logic_ships(level) & S.ships)) return "NO SHIP FOR THIS MISSION";
     return nullptr;
 }
 
@@ -447,6 +473,7 @@ int on_menu_frame(uint32_t, uint8_t* rdram, void*, void*) {
     }
     if (--S.medal_scan_cool <= 0) {
         S.medal_scan_cool = 30;
+        log_medal_changes(rdram, "menu");
         for (int lv = 0; lv < d::kMissionCount; ++lv) scan_medals(rdram, lv);
         save_file();
     }
@@ -690,6 +717,14 @@ int on_mission_select_init(uint32_t, uint8_t* rdram, void* ctx, void*) {
     return RS64_HOOK_CONTINUE;
 }
 
+// The debrief's continue check runs every debrief frame: by then the medal is decided.
+int on_debrief_pad(uint32_t, uint8_t* rdram, void*, void*) {
+    if (!active()) return RS64_HOOK_CONTINUE;
+    log_medal_changes(rdram, "debrief");
+    if (S.last_played >= 0) scan_medals(rdram, S.last_played);
+    return RS64_HOOK_CONTINUE;
+}
+
 int on_mission_select_fonts(uint32_t, uint8_t*, void* ctx, void*) {
     if (!active()) return RS64_HOOK_CONTINUE;
     if (regs(ctx)->r[kA2] < 3) regs(ctx)->r[kA2] = 3;
@@ -734,8 +769,9 @@ int on_craft_select_tick(uint32_t, uint8_t* rdram, void* ctx, void*) {
     // doesn't set its byte. Owned replay ships join the game's own list (the N-1 is missing from it otherwise).
     wb(rdram, a::kHangarFalconUnlocked, (S.ships & (1u << 5)) ? 1 : 0);
     wb(rdram, a::kHangarNabooUnlocked, (S.ships & (1u << 8)) ? 1 : 0);
-    const uint32_t offered = rw(rdram, a::kHangarAllowed) | (d::kReplayShips[level] & S.ships);
-    const uint32_t allowed = owned_level(level) ? (offered & S.ships) : 0u;
+    const uint32_t want = logic_ships(level) & S.ships;
+    const uint32_t offered = rw(rdram, a::kHangarAllowed) | want;
+    const uint32_t allowed = owned_level(level) ? (offered & want) : 0u;
     if (S.hangar_logged != level) {
         logf("probe hangar level=%d game allows 0x%X, owned 0x%X, launchable 0x%X", level, rw(rdram, a::kHangarAllowed),
              S.ships, allowed);
@@ -858,6 +894,7 @@ MOD_EXPORT void rs64_mod_init(uint8_t* rdram, void* ctx) {
     g_api->add_hook(RS64_HOOK_PLAYER_DAMAGE, on_player_damage, nullptr);
     g_api->add_hook(RS64_HOOK_MISSION_SELECT_INIT, on_mission_select_init, nullptr);
     g_api->add_hook(RS64_HOOK_MISSION_SELECT_FONTS, on_mission_select_fonts, nullptr);
+    g_api->add_hook(RS64_HOOK_DEBRIEF_PAD, on_debrief_pad, nullptr);
     g_api->add_hook(RS64_HOOK_MISSION_SELECT_TICK, on_mission_select_tick, nullptr);
     g_api->add_hook(RS64_HOOK_MISSION_CONFIRMED, on_mission_confirmed, nullptr);
     g_api->add_hook(RS64_HOOK_CRAFT_SELECT_INIT, on_craft_select_init, nullptr);
