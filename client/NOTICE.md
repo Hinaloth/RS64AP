@@ -4,7 +4,8 @@ The client mod in this folder (`client/`) is licensed under the **GNU General Pu
 (`LICENSE` here). It is a plugin loaded into RogueSquadron64Recomp's process and built against its GPL-3.0
 `include/rs64/host_api.h`, so it follows the host's license.
 
-Everything else in the RS64AP repository (the apworld, the shared data, the tools and the docs) is MIT-licensed
+The data-collection mod in `probes/` is GPL-3.0-or-later for the same reason. Everything else in the RS64AP
+repository (the apworld, the shared data, the tools and the docs) is MIT-licensed
 (`../LICENSE`).
 
 Third-party code fetched at build time and linked into the client:

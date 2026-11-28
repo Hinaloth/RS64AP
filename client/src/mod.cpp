@@ -109,10 +109,7 @@ struct Session {
     bool death_link = false;
 
     // Menus
-    uint32_t level_mask[d::kMissionCount] = {};   // hangar mask per level, from the game (0 = unknown)
-    bool masks_logged = false;
     int confirmed_level = -1;
-    int hangar_logged = -1;        // level whose hangar mask was last logged
     uint32_t status_buf = 0;
     std::string ms_shown, cs_shown;
     int medal_scan_cool = 0;
@@ -196,8 +193,6 @@ std::string pilot_path(int slot) {
     return std::string(dir) + "pilot_" + std::to_string(slot) + ".json";
 }
 
-// Medal sources as last seen, to log every change (where and when the game writes a medal is still unconfirmed).
-int g_seen_saved[d::kMissionCount] = {}, g_seen_live[d::kMissionCount] = {};
 
 // The pilot in a save slot, as the game identifies it: its ID and initials.
 int pilot_id(const uint8_t* rdram, int slot) { return rb(rdram, a::account(slot) + a::kAcctPilotId); }
@@ -224,8 +219,6 @@ void on_pilot(int slot) {
     S.file_path = slot >= 0 ? pilot_path(slot) : std::string();
     S.continue_requested = false;
     S.auto_connect_tried = false;
-    std::fill(std::begin(g_seen_saved), std::end(g_seen_saved), -1);
-    std::fill(std::begin(g_seen_live), std::end(g_seen_live), -1);
     if (!S.file_path.empty() && S.file.load(S.file_path)) {
         S.bound = true;
         logf("pilot %d is bound to seed %s (slot %s)", slot + 1, S.file.seed.c_str(), S.file.slot_name.c_str());
@@ -283,23 +276,6 @@ int best_medal(const uint8_t* rdram, int level) {
     return std::max(saved, live <= 3 ? live : 0);
 }
 
-
-void log_medal_changes(const uint8_t* rdram, const char* where) {
-    if (S.pilot_slot < 0) return;
-    const uint32_t acct = a::account(S.pilot_slot);
-    for (int lv = 0; lv < d::kMissionCount; ++lv) {
-        const int saved = (rb(rdram, acct + a::kAcctMedals + (uint32_t)(lv >> 2)) >> ((lv & 3) * 2)) & 3;
-        const int live = rb(rdram, a::kBestMedals + (uint32_t)lv);
-        if (g_seen_saved[lv] < 0) {  // first look at this pilot: just remember
-            g_seen_saved[lv] = saved;
-            g_seen_live[lv] = live;
-        } else if (saved != g_seen_saved[lv] || live != g_seen_live[lv]) {
-            logf("probe medal %s level=%d saved=%d->%d live=%d->%d", where, lv, g_seen_saved[lv], saved, g_seen_live[lv], live);
-            g_seen_saved[lv] = saved;
-            g_seen_live[lv] = live;
-        }
-    }
-}
 
 // A medal sends its own tier and every tier below it (all three always exist; the apworld puts filler in the tiers
 // above the seed's Medal Checks). Any medal also means the mission was completed.
@@ -463,8 +439,6 @@ void enforce_menus(uint8_t* rdram) {
 
 void enforce_mission_upgrades(uint8_t* rdram) {
     const uint32_t word = rw(rdram, a::kSettingsWord);
-    const uint32_t gained = word & a::kUpgradeMask & ~S.upgrades;
-    if (gained) logf("probe pickup level=%d bits=0x%X (reverted)", S.level, gained);
     ww(rdram, a::kSettingsWord, (word & ~a::kUpgradeMask) | S.upgrades);
     ww(rdram, a::kActiveUnlocks, (rw(rdram, a::kActiveUnlocks) & ~a::kUpgradeMask) | S.upgrades);
 }
@@ -523,7 +497,6 @@ int on_menu_frame(uint32_t, uint8_t* rdram, void*, void*) {
     }
     if (--S.medal_scan_cool <= 0) {
         S.medal_scan_cool = 30;
-        log_medal_changes(rdram, "menu");
         for (int lv = 0; lv < d::kMissionCount; ++lv) scan_medals(rdram, lv);
         save_file();
     }
@@ -552,8 +525,6 @@ int on_mission_ready(uint32_t, uint8_t* rdram, void*, void*) {
     S.deathlink_grace = 0;
     S.regen_next = g_api->mission_seconds() + d::kRegenSeconds;
     S.invincible_until = 0.0f;
-    logf("probe mission level=%d objectives=%u flags=0x%02X hidden=0x%02X lives=%u", S.level,
-         rb(rdram, a::kObjectiveCount), S.objectives_seen, rb(rdram, a::kObjectivesHidden), S.lives_seen);
     return RS64_HOOK_CONTINUE;
 }
 
@@ -589,7 +560,6 @@ int on_mission_frame(uint32_t, uint8_t* rdram, void* ctx, void*) {
     const uint8_t done = rb(rdram, a::kObjectivesDone);
     if (done != S.objectives_seen) {
         const uint8_t fresh = done & ~S.objectives_seen;
-        logf("probe objectives level=%d flags=0x%02X new=0x%02X", S.level, done, fresh);
         if (owned && S.objective_checks) {
             for (int b = 0; b < 8 && b < d::kMaxObjectives; ++b)
                 if (fresh & (1u << b)) queue_location(d::location_id(S.level, d::kSlotObjective0 + b));
@@ -678,7 +648,7 @@ void apply_leniency(uint8_t* rdram, int level) {
     if (!S.medal_buf) S.medal_buf = g_api->alloc(rdram, size);
     if (!S.medal_buf) return;
     for (uint32_t i = 0; i < size; ++i) wb(rdram, S.medal_buf + i, rb(rdram, table + i));
-    std::string log = "probe leniency level=" + std::to_string(level);
+    std::string log = "leniency level=" + std::to_string(level);
     for (uint32_t tier = 0; tier < 3; ++tier) {
         const uint32_t rec = S.medal_buf + (uint32_t)level * a::kMedalLevelStride + tier * 0xCu;
         const float minutes = rf(rdram, rec) * d::kLeniencyTimeScale;
@@ -731,10 +701,7 @@ int on_mission_end(uint32_t, uint8_t* rdram, void*, void*) {
     return RS64_HOOK_CONTINUE;
 }
 
-int on_powerup_collect(uint32_t, uint8_t* rdram, void* ctx, void*) {
-    const uint32_t pickup = (uint32_t)regs(ctx)->r[kS1];
-    const uint32_t record = pickup ? rw(rdram, pickup + 4) : 0;
-    logf("probe powerup level=%d object=0x%08X record=0x%08X", S.level, pickup, record);
+int on_powerup_collect(uint32_t, uint8_t*, void*, void*) {
     if (active() && owned_level(S.level) && d::kMissionPickup[S.level]) {
         queue_location(d::location_id(S.level, d::kSlotPickup));
     }
@@ -753,26 +720,12 @@ int on_mission_select_init(uint32_t, uint8_t* rdram, void* ctx, void*) {
     const uint32_t asked = (uint32_t)regs(ctx)->r[kA2];
     if (far >= 0 && asked < (uint32_t)far) regs(ctx)->r[kA2] = (uint64_t)far;
     logf("mission select: game lists up to level %u, furthest pass %d", asked, far);
-    std::string line = "probe craft masks consider/ignore:";
-    for (int lv = 0; lv < d::kMissionCount; ++lv) {
-        const uint32_t consider = call(rdram, ctx, a::kFnCraftMaskConsiderUnlocks, {(uint32_t)lv});
-        const uint32_t ignore = call(rdram, ctx, a::kFnCraftMaskIgnoreUnlocks, {(uint32_t)lv});
-        S.level_mask[lv] = consider;
-        char part[40];
-        std::snprintf(part, sizeof part, " %d=0x%X/0x%X", lv, consider, ignore);
-        line += part;
-    }
-    if (!S.masks_logged) {
-        logf("%s", line.c_str());
-        S.masks_logged = true;
-    }
     return RS64_HOOK_CONTINUE;
 }
 
 // The debrief's continue check runs every debrief frame: by then the medal is decided.
 int on_debrief_pad(uint32_t, uint8_t* rdram, void*, void*) {
     if (!active()) return RS64_HOOK_CONTINUE;
-    log_medal_changes(rdram, "debrief");
     if (S.last_played >= 0) scan_medals(rdram, S.last_played);
     return RS64_HOOK_CONTINUE;
 }
@@ -806,7 +759,6 @@ int on_mission_confirmed(uint32_t, uint8_t*, void* ctx, void*) {
 }
 
 int on_craft_select_init(uint32_t, uint8_t*, void* ctx, void*) {
-    S.hangar_logged = -1;
     if (!active()) return RS64_HOOK_CONTINUE;
     if (regs(ctx)->r[kA2] < 4) regs(ctx)->r[kA2] = 4;
     S.cs_shown = "\x01";
@@ -824,11 +776,6 @@ int on_craft_select_tick(uint32_t, uint8_t* rdram, void* ctx, void*) {
     const uint32_t want = logic_ships(level) & S.ships;
     const uint32_t offered = rw(rdram, a::kHangarAllowed) | want;
     const uint32_t allowed = owned_level(level) ? (offered & want) : 0u;
-    if (S.hangar_logged != level) {
-        logf("probe hangar level=%d game allows 0x%X, owned 0x%X, launchable 0x%X", level, rw(rdram, a::kHangarAllowed),
-             S.ships, allowed);
-        S.hangar_logged = level;
-    }
     ww(rdram, a::kHangarAllowed, allowed);
     if (!allowed) {
         const uint32_t pressed = a::kPressedWords + 4u * rb(rdram, a::kHangarPort);

@@ -29,7 +29,7 @@ A full seed has been played from start to goal on Windows against archipelago.gg
 
 | Not yet | |
 | --- | --- |
-| Objective checks (**WIP**) | The `objective_checks` option exists but isn't usable yet: it needs each mission's objective count and how objectives map to the game's flags. Generation stops with an error if it's turned on, so leave it `false` |
+| Objective checks (**WIP**) | The `objective_checks` option exists but isn't usable yet: it needs each mission's objective count and how objectives map to the game's flags (being collected with the probe, see below). Generation stops with an error if it's turned on, so leave it `false` |
 | The Battle of Hoth's ships | Assumed Snowspeeder only |
 | DeathLink | Built and tested without the game only |
 | Linux client | Built on Ubuntu 24.04 and tested without the game; not yet run with the Linux recomp |
@@ -52,17 +52,36 @@ counts the ships vanilla allows on a replay. Both work in play.
 
 The player guide is [apworld/rs64/docs/setup_en.md](apworld/rs64/docs/setup_en.md).
 
+## Collecting game data (probe)
+
+Some game facts the randomizer needs (objective counts per mission, how objectives map to the game's flags) come from
+the **rs64ap-probe** mod and `probe.py`, kept separate from the AP client. The probe only writes a log
+(`mod_data/rs64ap-probe/probe.log` in the game folder) and changes nothing in the game.
+
+1. Unzip `rs64ap-probe-<os>.zip` into the game's `mods/` folder (it holds the `rs64ap-probe` mod folder and `probe.py`).
+   Enable **RS64AP Probe** in F6 and turn the **Archipelago (RS64AP)** mod off. Back up your save.
+2. With Python 3.10+: `python probe.py collect --game "<path>/RogueSquadron64Recomp.exe"`. The game starts and
+   flies itself into each of the 19 missions, waits a few seconds, aborts, and quits. Don't touch it. The script
+   then prints one line per mission: objective count, completion order, hidden flags, results.
+3. For the order objectives complete in, play missions through normally with the probe on, then run
+   `python probe.py parse --game "<path>/RogueSquadron64Recomp.exe"`.
+
+From the repository, `python tools/probe.py parse --log <probe.log> --write` puts the counts into
+`data/rs64ap.json` and regenerates the apworld and client data.
+
 ## Repository layout
 
 ```
 apworld/rs64/        the Archipelago world (Python): items, locations, options, logic, tests, player docs
 client/              the in-game client, a native mod for the recomp (C++)
+probes/rs64ap-probe/ log-only data-collection mod (C++), not part of the client
   src/               connection (net), per-pilot state (pilot), game hooks and rules (mod)
   src/generated/     generated from data/ — do not edit
   tests/harness.cpp  loads the mod with a fake host API for tests
   cmake/             MinGW-w64 toolchain for cross-building Windows from Linux
 data/rs64ap.json     missions, ships, upgrades, items, IDs: the single source of truth
-tools/               gen_data.py (codegen), e2e.py (end-to-end test), package.py (release zips)
+tools/               gen_data.py (codegen), e2e.py (end-to-end test), package.py (release zips),
+                     probe.py (drive the game with the probe mod, parse its log)
 docs/BIBLE.md        design, game facts, decision log
 RS64AP.yaml          player options template
 ```
@@ -129,13 +148,13 @@ cmake -S client -B build/client -DRS64AP_BUILD_HARNESS=ON && cmake --build build
 python tools/e2e.py --ap <Archipelago> --build build/client
 ```
 
-In the game, keep the recomp's log (stderr): the client's `[rs64ap]` lines show what it sends and receives, and the
-`[rs64ap] probe` lines report game facts still being mapped (hangar masks, pickups, objectives, medals).
+In the game, the recomp's log (stderr) has the client's `[rs64ap]` lines: what it sends and receives. Game facts
+still being mapped come from the probe mod instead (see above).
 
 ## License
 
-- `client/` is **GPL-3.0-or-later**. It's a plugin loaded into RogueSquadron64Recomp (GPL-3.0) and built against its
-  header. See [client/NOTICE.md](client/NOTICE.md) for bundled third-party licenses.
+- `client/` and `probes/` are **GPL-3.0-or-later**. They're plugins loaded into RogueSquadron64Recomp (GPL-3.0) and
+  built against its header. See [client/NOTICE.md](client/NOTICE.md) for bundled third-party licenses.
 - Everything else (apworld, data, tools, docs) is **MIT** ([LICENSE](LICENSE)), the usual license for Archipelago
   worlds.
 

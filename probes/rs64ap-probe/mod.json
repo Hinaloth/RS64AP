@@ -1,0 +1,11 @@
+{
+  "game_id": "rs64",
+  "id": "rs64ap-probe",
+  "display_name": "RS64AP Probe (data collection)",
+  "description": "Logs mission facts for the RS64AP randomizer's data: objective counts and flags, mission results, medals, pickups, hangar ship masks. Writes mod_data/rs64ap-probe/probe.log beside the game's settings. Changes nothing in the game. Turn it off when you're done collecting.",
+  "version": "0.1.0",
+  "authors": ["Hinaloth", "RS64AP contributors"],
+  "minimum_recomp_version": "0.0.0",
+  "enabled_by_default": false,
+  "native_libraries": { "rs64ap_probe": ["rs64_mod_init"] }
+}
