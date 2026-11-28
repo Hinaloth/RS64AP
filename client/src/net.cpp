@@ -193,8 +193,9 @@ void Net::run(ConnectConfig cfg, int gen) {
                 want_tag = out_deathlink_tag_;
             }
             if (want_tag && !tagged) {
-                ap->ConnectUpdate(false, 0, true, std::list<std::string>{"DeathLink"});
-                tagged = true;
+                tagged = ap->ConnectUpdate(false, 0, true, std::list<std::string>{"DeathLink"});
+                std::lock_guard<std::mutex> lk(mu_);
+                if (current(gen)) messages_.push_back(tagged ? "DeathLink on" : "DeathLink tag could not be set");
             }
             if (!locs.empty()) ap->LocationChecks(std::list<int64_t>(locs.begin(), locs.end()));
             if (goal) ap->StatusUpdate(APClient::ClientStatus::GOAL);
@@ -204,7 +205,9 @@ void Net::run(ConnectConfig cfg, int gen) {
                     {"cause", cause},
                     {"source", ap->get_slot()},
                 };
-                ap->Bounce(body, {}, {}, {"DeathLink"});
+                const bool ok = ap->Bounce(body, {}, {}, {"DeathLink"});
+                std::lock_guard<std::mutex> lk(mu_);
+                if (current(gen)) messages_.push_back(ok ? "DeathLink sent: " + cause : "DeathLink could not be sent");
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(16));

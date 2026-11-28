@@ -59,6 +59,18 @@ void logf(const char* fmt, ...) {
     va_end(ap);
     std::string line = std::string("[rs64ap] ") + buf;
     g_api->log(line.c_str());
+    // Also mod_data/rs64ap/client.log (this session only), since the console isn't visible to most players.
+    static FILE* file = nullptr;
+    static bool tried = false;
+    if (!tried) {
+        tried = true;
+        const char* dir = g_api->mod_data_dir(kModId);
+        if (dir && *dir) file = std::fopen((std::string(dir) + "client.log").c_str(), "w");
+    }
+    if (file) {
+        std::fprintf(file, "%s\n", buf);
+        std::fflush(file);
+    }
 }
 
 uint32_t call(uint8_t* rdram, void* ctx, uint32_t vram, std::initializer_list<uint32_t> args,
@@ -578,6 +590,9 @@ int on_mission_frame(uint32_t, uint8_t* rdram, void* ctx, void*) {
         if (S.death_link && S.connected && S.deathlink_grace == 0) {
             g_net.send_deathlink(S.file.slot_name + " was shot down over " + d::kMissionNames[S.level]);
             logf("DeathLink sent (shot down over %s)", d::kMissionNames[S.level]);
+        } else {
+            logf("died over %s; no DeathLink sent (death_link %d, connected %d, grace %d)", d::kMissionNames[S.level],
+                 S.death_link ? 1 : 0, S.connected ? 1 : 0, S.deathlink_grace);
         }
     }
     S.hull_seen = hull;
