@@ -71,6 +71,9 @@ constexpr uint32_t kMedalLevelStride = 0x24u;     // three 0xC records per level
 // Menu overlay: hangar (craft select)
 constexpr uint32_t kHangarPort = 0x800CD6D0u;     // u8
 constexpr uint32_t kHangarAllowed = 0x800CD6D8u;  // u32, bit n = craft n may launch  SPIKE S3
+// u8 each: the carousel skips the Falcon's and the N-1's stops while these are 0 (src/game/mod_content/hangar_ships.cpp)
+constexpr uint32_t kHangarFalconUnlocked = 0x800CD6CDu;
+constexpr uint32_t kHangarNabooUnlocked = 0x800CD6CFu;
 
 // Pads
 constexpr uint32_t kPressedWords = 0x8013A960u;   // u32 per port: buttons pressed this frame

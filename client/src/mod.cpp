@@ -110,6 +110,7 @@ struct Session {
     uint32_t level_mask[d::kMissionCount] = {};   // hangar mask per level, from the game (0 = unknown)
     bool masks_logged = false;
     int confirmed_level = -1;
+    int hangar_logged = -1;        // level whose hangar mask was last logged
     uint32_t status_buf = 0;
     std::string ms_shown, cs_shown;
     int medal_scan_cool = 0;
@@ -718,6 +719,7 @@ int on_mission_confirmed(uint32_t, uint8_t*, void* ctx, void*) {
 }
 
 int on_craft_select_init(uint32_t, uint8_t*, void* ctx, void*) {
+    S.hangar_logged = -1;
     if (!active()) return RS64_HOOK_CONTINUE;
     if (regs(ctx)->r[kA2] < 4) regs(ctx)->r[kA2] = 4;
     S.cs_shown = "\x01";
@@ -728,7 +730,17 @@ int on_craft_select_tick(uint32_t, uint8_t* rdram, void* ctx, void*) {
     if (!active()) return RS64_HOOK_CONTINUE;
     const int level = S.confirmed_level >= 0 ? S.confirmed_level : rb(rdram, a::kCurrentLevel);
     if (level < 0 || level >= d::kMissionCount) return RS64_HOOK_CONTINUE;
-    const uint32_t allowed = owned_level(level) ? (rw(rdram, a::kHangarAllowed) & S.ships) : 0u;
+    // The carousel stops on the Falcon and the N-1 only when their hangar unlock bytes are set; the N-1's key alone
+    // doesn't set its byte. Owned replay ships join the game's own list (the N-1 is missing from it otherwise).
+    wb(rdram, a::kHangarFalconUnlocked, (S.ships & (1u << 5)) ? 1 : 0);
+    wb(rdram, a::kHangarNabooUnlocked, (S.ships & (1u << 8)) ? 1 : 0);
+    const uint32_t offered = rw(rdram, a::kHangarAllowed) | (d::kReplayShips[level] & S.ships);
+    const uint32_t allowed = owned_level(level) ? (offered & S.ships) : 0u;
+    if (S.hangar_logged != level) {
+        logf("probe hangar level=%d game allows 0x%X, owned 0x%X, launchable 0x%X", level, rw(rdram, a::kHangarAllowed),
+             S.ships, allowed);
+        S.hangar_logged = level;
+    }
     ww(rdram, a::kHangarAllowed, allowed);
     if (!allowed) {
         const uint32_t pressed = a::kPressedWords + 4u * rb(rdram, a::kHangarPort);

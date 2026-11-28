@@ -747,6 +747,7 @@ Using Archipelago's `WorldTestBase`:
 | 2026-11-27 | Game name `Star Wars Rogue Squadron` (no colon). |
 | 2026-11-27 | Licenses: `client/` GPL-3.0-or-later (follows the recomp), everything else MIT. |
 | 2026-11-27 | `minimum_ap_version` 0.6.8. |
+| 2026-11-28 | In play, any owned regular ship launched on a mission's first visit (the V-wing on Sullust, which isn't even a Sullust replay ship): the all-craft unlock bit opens the hangar wide. The N-1 didn't: the hangar carousel skips its stop unless `0x800CD6CF` is set (Falcon: `0x800CD6CD`). The client now sets both for owned ships and adds owned replay ships to the hangar's allowed mask; untested in-game. |
 | 2026-11-28 | All three medal tiers are always checks, and a medal sends every tier below it. `medal_checks` now only sets the best tier that can hold useful items; higher tiers hold filler. A completion with no medal still sends Complete: the client reads the mission result byte (`0x80130B14` = 1), because scripted mission ends skip the success hook. Medals are read from the live best-medal array (`0x80130B1C`) as well as the pilot record. |
 | 2026-11-27 | New items: Replenishing Secondaries (useful, 1 per 15 s), Temporary Invincibility (filler, 15 s, damage-hook method), Medal Leniency per mission (filler, a third easier). No Wingmen Health item. |
 | 2026-11-27 | Per-mission default and replay ships recorded from play. `ship_logic` option: `default_only` (default) until replay ships are confirmed launchable on a first visit, then `any_listed` is available. |
