@@ -329,6 +329,21 @@ int main(int argc, char** argv) {
     const std::string pilot2 = slurp(g_data_dir + "pilot_0.json");
     expect(std::count(pilot2.begin(), pilot2.end(), ',') == (long)items_before, "reconnect did not duplicate items");
 
+    // Back on the ARCHIPELAGO page with the same server: reconnects and continues without CONNECT.
+    Regs ms2{};
+    fire(RS64_HOOK_MISSION_SELECT_INIT, &ms2);
+    g_actions["ap_disconnect"].first(nullptr);
+    frames(5);
+    expect(wait_ready(20), "same server: auto-reconnected without CONNECT");
+    // A different server (a new room): the page waits.
+    fire(RS64_HOOK_MISSION_SELECT_INIT, &ms2);
+    g_actions["ap_disconnect"].first(nullptr);
+    const std::string real_server = g_config["server"];
+    g_config["server"] = "ws://127.0.0.1:1";
+    bool moved_on = wait_ready(2);
+    expect(!moved_on, "different server: waits for CONNECT (status %s)", text("ap_status").c_str());
+    g_config["server"] = real_server;
+
     // The pilot is deleted and a new one created in the same slot: a new pilot, so the binding is dropped.
     wb(RAM, a::account(0) + a::kAcctPilotId, 7);
     wb(RAM, a::account(0) + a::kAcctName, 'N');

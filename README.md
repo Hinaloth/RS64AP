@@ -92,7 +92,7 @@ servers.
 3. Start the game, press **F6**, enable **Archipelago (RS64AP)**, and set **Server**, **Slot name** and **Password** in
    its settings. Restart the game.
 4. Main menu → **ARCHIPELAGO** → pick a **fresh pilot** → **CONNECT**. The pilot is bound to that seed, and the client
-   rewrites its unlocks, so don't use a pilot you care about. Next time, choosing the same pilot reconnects by itself.
+   rewrites its unlocks, so don't use a pilot you care about. Next time, the same pilot reconnects by itself if the server hasn't changed; with a new server address the page waits for CONNECT.
 
 The player guide is [apworld/rs64/docs/setup_en.md](apworld/rs64/docs/setup_en.md).
 

@@ -86,7 +86,8 @@ struct Session {
     bool dirty = false;
     int pending_bind_slot = -1;    // CONNECT pressed for this pilot
     std::string error;             // shown instead of the net status
-    bool auto_connect_tried = false;
+    bool continue_requested = false;  // CONNECT pressed (or auto-reconnect) on this visit of the ARCHIPELAGO page
+    bool auto_connect_tried = false;  // auto-reconnect considered on this visit
 
     // Derived from file.items
     bool passes[d::kMissionCount] = {};
@@ -221,6 +222,7 @@ void on_pilot(int slot) {
     S.bound = false;
     S.file = PilotFile{};
     S.file_path = slot >= 0 ? pilot_path(slot) : std::string();
+    S.continue_requested = false;
     S.auto_connect_tried = false;
     std::fill(std::begin(g_seen_saved), std::end(g_seen_saved), -1);
     std::fill(std::begin(g_seen_live), std::end(g_seen_live), -1);
@@ -741,6 +743,8 @@ int on_powerup_collect(uint32_t, uint8_t* rdram, void* ctx, void*) {
 
 int on_mission_select_init(uint32_t, uint8_t* rdram, void* ctx, void*) {
     restore_medal_table(rdram);
+    S.continue_requested = false;
+    S.auto_connect_tried = false;
     if (!active()) return RS64_HOOK_CONTINUE;
     enforce_menus(rdram);
     // a2 = highest level the screen lists (from the pilot's progress as loaded, not the account we rewrite): list up
@@ -862,6 +866,8 @@ void action_connect(void*) {
         return;
     }
     S.error.clear();
+    S.continue_requested = true;
+    if (S.connected && S.bound && S.pilot_slot == slot) return;  // already connected: just continue
     S.pending_bind_slot = slot;
     g_net.connect(c);
 }
@@ -880,17 +886,27 @@ void action_unbind(void*) {
     S.error = "PILOT UNBOUND";
 }
 
+// Polled while the ARCHIPELAGO page is up. A bound pilot reconnects and continues on its own only when the server in
+// the settings is the one it last played on; any other server (a new room) waits for CONNECT, so FORGET PILOT SEED
+// stays reachable. Mission select clears the request.
 int condition_ready(void*) {
-    // Polled while the ARCHIPELAGO page is up: a bound pilot reconnects on its own.
-    if (S.bound && !S.auto_connect_tried && g_net.state() == NetState::Idle && S.error.empty()) {
+    if (S.bound && !S.auto_connect_tried && S.error.empty()) {
         S.auto_connect_tried = true;
         const ConnectConfig c = make_config();
-        if (!c.server.empty() && !c.slot.empty()) {
-            S.pending_bind_slot = S.pilot_slot;
-            g_net.connect(c);
+        const bool same_server = !c.server.empty() && c.server == S.file.server &&
+                                 (S.file.slot_name.empty() || c.slot == S.file.slot_name);
+        if (same_server) {
+            S.continue_requested = true;
+            if (!(S.connected && S.pilot_slot == g_api->save_slot()) && g_net.state() == NetState::Idle) {
+                S.pending_bind_slot = S.pilot_slot;
+                g_net.connect(c);
+            }
+        } else {
+            logf("pilot %d last played on %s, settings say %s: waiting for CONNECT", S.pilot_slot + 1,
+                 S.file.server.c_str(), c.server.c_str());
         }
     }
-    return S.connected && S.bound && S.pilot_slot == g_api->save_slot() ? 1 : 0;
+    return S.continue_requested && S.connected && S.bound && S.pilot_slot == g_api->save_slot() ? 1 : 0;
 }
 
 const char* text_status(void*) {
