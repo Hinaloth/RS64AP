@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Package release artifacts into dist/.
 
-    python tools/package.py                         rs64.apworld + RS64AP.yaml
+    python tools/package.py                         rs64.apworld + the options template
     python tools/package.py --client <build dir>    also rs64ap-client-<platform>.zip from a client build
 """
 from __future__ import annotations
@@ -73,8 +73,9 @@ def main() -> int:
         return 1
     DIST.mkdir(exist_ok=True)
     print(package_apworld())
-    shutil.copy(ROOT / "RS64AP.yaml", DIST / "RS64AP.yaml")
-    print(DIST / "RS64AP.yaml")
+    # Named like the template Archipelago's Launcher generates (GitHub shows the spaces as dots).
+    shutil.copy(ROOT / "RS64AP.yaml", DIST / "Star Wars Rogue Squadron.yaml")
+    print(DIST / "Star Wars Rogue Squadron.yaml")
     if args.client:
         print(package_client(args.client, args.platform))
     if args.probe:

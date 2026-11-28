@@ -32,7 +32,7 @@ page. CI fails when any of them is stale.
 ### apworld
 
 ```sh
-python tools/package.py        # writes dist/rs64.apworld and dist/RS64AP.yaml
+python tools/package.py        # writes dist/rs64.apworld and dist/"Star Wars Rogue Squadron.yaml"
 ```
 
 ### Client mod
