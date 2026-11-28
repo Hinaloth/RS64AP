@@ -8,7 +8,7 @@
 - **Your own copy of the game:** a dump of *Star Wars: Rogue Squadron* (USA v1.0) as `.z64`, `.v64` or `.n64`. It
   isn't provided here or by the recomp. Dump it from a cartridge you own.
 - **[Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases) 0.6.8 or newer.**
-- **From the [RS64AP releases](https://github.com/Hinaloth/RS64AP/releases):** `rs64.apworld`, `RS64AP.yaml`, and the
+- **From the [RS64AP releases](https://github.com/Hinaloth/RS64AP/releases):** `rs64.apworld`, `Star.Wars.Rogue.Squadron.yaml`, and the
   client zip for your system (`rs64ap-client-windows.zip` or `rs64ap-client-linux.zip`).
 
 ## 1. Get the game running
@@ -39,7 +39,7 @@ Archipelago Launcher if it was open.
 
 ## 4. Make your YAML
 
-Start from `RS64AP.yaml` from the release: every option in it has a comment. You can also get a fresh template from
+Start from `Star.Wars.Rogue.Squadron.yaml` from the release: every option in it has a comment. You can also get a fresh template from
 the Archipelago Launcher (**Generate Template Options**). Set `name` to the slot name you'll play under, then
 change the options you want.
 
