@@ -5,7 +5,7 @@
 namespace rs64ap::data {
 
 constexpr const char* kGame = "Star Wars Rogue Squadron";
-constexpr const char* kWorldVersion = "0.1.0";
+constexpr const char* kWorldVersion = "1.0.0";
 constexpr int64_t kIdBase = 640000;
 constexpr int kMissionCount = 19;
 constexpr int kShipCount = 9;

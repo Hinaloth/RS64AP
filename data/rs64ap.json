@@ -1,13 +1,14 @@
 {
   "//": "Single source of truth for RS64AP. Run `python tools/gen_data.py` after editing: it writes apworld/rs64/data.py and client/src/generated/rs64ap_data.h. IDs follow docs/BIBLE.md section 9.2 and must never change once released.",
   "game": "Star Wars Rogue Squadron",
-  "world_version": "0.1.0",
+  "world_version": "1.0.0",
   "id_base": 640000,
   "verified": {
     "//": "false = data still being confirmed (docs/BIBLE.md section 11). The rs64ap-probe mod and tools/probe.py collect it.",
     "allowed_ships": true,
-    "pickups": false,
+    "pickups": true,
     "objectives": true,
+    "//pickups": "Every flagged pickup sends its check in play (2026-11-28); the upgrade itself is applied by the game after the mission ends, as in vanilla.",
     "//ships": "default_ship and replay_ships from play (2026-11-27); the probe's craft masks (2026-11-28) match every default ship and confirm Hoth is Snowspeeder only. Replay ships launch on a first visit with the client's all-craft unlock (play, 2026-11-28).",
     "objective_counts": true,
     "//objectives": "Counts from the probe (2026-11-28). Objective n is flag bit n-1 (play logs of Mos Eisley, Barkhesh, Nonnah, 2026-11-28): bits below the count are the objectives; hidden bits only mean 'not shown yet', and a hidden bit at or past the count (Nonnah 0x04) clears without an objective."

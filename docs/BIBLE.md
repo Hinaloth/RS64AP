@@ -11,10 +11,10 @@ Status markers used throughout:
 - **[PROPOSED]** a default picked to keep moving; change it freely.
 - **[SPIKE Sn]** depends on a fact about the game nobody has checked yet; see [Spikes](#11-spikes).
 
-**Build status (2026-11-28, v0.1.0).** The apworld and the client are released as an alpha. A full seed was played
-from start to goal on Windows: passes, ships (N-1 included), completions, medals, pickups and items all work. Still
-open: objective counts (S6), Hoth's ships, the pickups' upgrade bits (S4), DeathLink in play, and the Linux client in
-play. The decision log (section 16) records what play confirmed.
+**Build status (2026-11-28, v1.0.0).** Everything in this document is built and confirmed in play on Windows:
+passes, ships (N-1 included), completions, medals, upgrade pickups, objectives, bonus missions, every item and
+DeathLink. The Linux client builds and passes the automated tests but hasn't been run with the Linux recomp. The
+decision log (section 16) records what play confirmed.
 
 Facts about the game cite the recomp repo's docs and sources by path (snapshot: commit `222947ee`,
 2026-11-26, host API v12). Addresses are KSEG0 (`0x80......`).
@@ -215,7 +215,7 @@ Starting missions and starting ships come out of the pool as precollected items.
 - Upgrades: the names in [2.3](#23-upgrades).
 - Item groups: `Mission Passes`, `Campaign Passes`, `Bonus Passes`, `Ships`, `Upgrades`.
 
-### 3.3 Filler **[PROPOSED]**
+### 3.3 Filler **[DECIDED]**
 
 Received filler waits in a persistent queue and is applied only when the player is in an active
 mission: state `mission`, after `RS64_HOOK_MISSION_READY`, not `in_cutscene()`, not paused. One
@@ -306,13 +306,13 @@ checked by the client against its own sent-location set.
 | Option | Values | Default | Status |
 | --- | --- | --- | --- |
 | `goal` | `calamari`, `missions` | `calamari` | DECIDED |
-| `missions_required` | 1–19 | 10 | DECIDED (range), default PROPOSED |
-| `starting_missions` | 1–3 | 2 | PROPOSED (see Open decisions) |
-| `starting_mission_pool` | `campaign`, `any` | `campaign` | PROPOSED |
+| `missions_required` | 1–19 | 10 | DECIDED |
+| `starting_missions` | 1–3 | 2 | DECIDED |
+| `starting_mission_pool` | `campaign`, `any` | `campaign` | DECIDED |
 | `medal_checks` | `bronze`, `silver`, `gold` | `silver` | DECIDED |
 | `upgrade_pickups` | on / off | on | DECIDED |
 | `objective_checks` | on / off | off | DECIDED |
-| `upgrades_for_gold` | 0–8 | 4 | PROPOSED |
+| `upgrades_for_gold` | 0–8 | 4 | DECIDED |
 | `ship_logic` | `default_only`, `any_listed` | `default_only` | DECIDED |
 | `death_link` | on / off | off | DECIDED, works in play |
 | `death_link_trigger` | `every_life`, `game_over` | `every_life` | DECIDED |
@@ -349,8 +349,8 @@ Menu ──► Hangar ──► <Mission 0> … <Mission 18>
 | --- | --- |
 | Complete | none |
 | Bronze | none |
-| Silver | none **[PROPOSED]** |
-| Gold | `HasFromList(*UPGRADES, count=upgrades_for_gold)` **[PROPOSED]** |
+| Silver | none **[DECIDED]** |
+| Gold | `HasFromList(*UPGRADES, count=upgrades_for_gold)` **[DECIDED]** |
 | Upgrade Pickup | none |
 | Objective n | none |
 
@@ -380,7 +380,7 @@ itself to players (`docs/rule builder.md` in Archipelago).
 
 ```
 apworld/rs64/
-  archipelago.json      {"game": "Star Wars Rogue Squadron", "minimum_ap_version": "0.6.8", "world_version": "0.1.0", "authors": [...]}
+  archipelago.json      {"game": "Star Wars Rogue Squadron", "minimum_ap_version": "0.6.8", "world_version": "1.0.0", "authors": [...]}
   __init__.py           RS64World
   items.py              item table, groups, filler weights
   locations.py          location table
@@ -416,7 +416,7 @@ apworld/rs64/
 
 ```json
 {
-  "world_version": "0.1.0",
+  "world_version": "1.0.0",
   "goal": 0,
   "missions_required": 10,
   "medal_checks": 1,
@@ -496,7 +496,7 @@ enforcement runs again after every load. Never touch the EEPROM image directly.
 | Complete | `RS64_HOOK_RESULT_SUCCESS` sets `pending_complete[level]` | At `RS64_HOOK_MISSION_END` if still pending, or at debrief **[SPIKE S9]** |
 | Medal | `level_medals` diff against last-sent, per level | On `STATE_CHANGED` out of the debrief, and on connect |
 | Upgrade pickup | `RS64_HOOK_POWERUP_COLLECT` (`s1` = pickup, `s1+4` its DAT record) | Immediately; keyed by `(level, DAT record)` from the data table |
-| Objective n | `completedObjectiveFlags` diff each mission frame | Immediately **[PROPOSED]**, even if the mission later fails |
+| Objective n | `completedObjectiveFlags` diff each mission frame | Immediately **[DECIDED]**, even if the mission later fails |
 
 - `pending_complete` is cleared by `RESULT_FAIL`, abort or restart.
 - On every (re)connect, the client re-sends all locations it can derive from the save (medals,
@@ -579,7 +579,7 @@ objective counts, and all names and IDs. `tools/gen_data.py` writes `apworld/rs6
 `client/src/generated/rs64ap_data.h`. Neither generated file is edited by hand; CI fails if they're
 stale.
 
-### 9.2 ID scheme **[PROPOSED]**
+### 9.2 ID scheme **[DECIDED]**
 
 Base `640000` (`64` for RS64; AP IDs only need to be unique within a game).
 
@@ -666,6 +666,9 @@ and replay the repo's recordings with `ROGUESQ_LS_REPLAY`
 | S11 | AP client library builds as a native mod and reaches `wss://archipelago.gg` on Windows + Linux | Minimal connect probe | M2 |
 | S12 | Menu font charset | Render every byte 0x20–0x7F in a label | M8 |
 
+All spikes were answered by 2026-11-28, through play and the rs64ap-probe mod. The answers are in
+`data/rs64ap.json` and the decision log (section 16); the **[SPIKE Sn]** markers above show where each one applied.
+
 ---
 
 ## 12. Milestones
@@ -726,12 +729,10 @@ Using Archipelago's `WorldTestBase`:
 
 ## 15. Open decisions
 
-1. **`starting_missions` default**: 2 (gives 4 checks in sphere 1 for solo seeds) vs 1 (as first
-   described).
-2. **Gold logic**: require `upgrades_for_gold` upgrades (default 4), or no extra rule.
-3. **Silver logic**: currently no extra rule.
-4. **Objectives**: send immediately even if the mission fails (current), or only on success.
-5. **Filler set**: keep Hull Repair if S8 finds the health field cheaply?
+None for 1.0. Settled 2026-11-28: `starting_missions` 2; gold needs `upgrades_for_gold` upgrades, silver has no
+extra rule; objectives send as soon as they're done, even if the mission then fails; Hull Repair and Secondary
+Refill apply as soon as they arrive in a mission (wasted at full hull or ammo, by design); `ship_logic` stays
+`default_only` by default (`any_listed` asks more of the player).
 
 ---
 
@@ -739,6 +740,7 @@ Using Archipelago's `WorldTestBase`:
 
 | Date | Decision |
 | --- | --- |
+| 2026-11-28 | 1.0.0. Bonus missions and every upgrade pickup confirmed in play (pickups are applied by the game after the mission ends, as in vanilla). All option defaults kept; Hull Repair and Secondary Refill keep applying on arrival; `ship_logic` default stays `default_only`. The Linux client is released untested in play. The client refuses seeds from another major apworld version, so 0.x seeds need regenerating. |
 | 2026-11-28 | DeathLink confirmed in play both ways against DeathLinkipelago, along with Extra Life and Secondary Refill filler. New option `death_link_trigger`: `every_life` (default, as before) or `game_over`, which sends only the death on the last life, so players linked with other DeathLink games aren't sent back through every life. Play logs show the last-life death with the lives counter at 1, then 0 and a game-over result (3). Received deaths still always kill. |
 | 2026-11-27 | Mission passes are individual items, 19 of them, bonus missions included; one or more given at start. |
 | 2026-11-27 | Ships are individual items; the starting ship matches the starting mission so it can be finished. |

@@ -52,7 +52,7 @@ std::vector<uint32_t> g_damage_calls;
 
 int g_log_deathlink_sent = 0;
 void hlog(const char* line) {
-    if (std::strstr(line, "DeathLink sent")) ++g_log_deathlink_sent;
+    if (std::strstr(line, "DeathLink sent (")) ++g_log_deathlink_sent;  // not the network thread's "sent:" echo
     std::fprintf(stderr, "%s\n", line);
 }
 int add_hook(uint32_t hook, rs64_hook_fn fn, void* user) { g_hooks[hook].push_back({fn, user}); return 0; }

@@ -7,7 +7,7 @@
 # game's mods/ directory. Dependencies are fetched at configure time. OpenSSL is needed for wss:// (archipelago.gg);
 # without it the build still works but can only reach ws:// servers (local hosting).
 cmake_minimum_required(VERSION 3.20)
-project(rs64ap_client VERSION 0.1.0 LANGUAGES CXX)
+project(rs64ap_client VERSION 1.0.0 LANGUAGES CXX)
 
 include(FetchContent)
 
