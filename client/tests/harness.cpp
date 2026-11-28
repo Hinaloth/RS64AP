@@ -290,7 +290,8 @@ int main(int argc, char** argv) {
     }
     ww(RAM, a::kMedalInfoPtr, table);
 
-    // DeathLink out (the e2e seed has death_link on): the hull reaching 0 sends; an abort-style life loss doesn't.
+    // DeathLink out (the e2e seed has death_link on with the game_over trigger): only the hull reaching 0 on the
+    // last life sends; an abort-style life loss and a death with lives to spare don't.
     wf(RAM, a::kPlayerHealth, 100.0f);
     frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
     g_log_deathlink_sent = 0;
@@ -299,8 +300,16 @@ int main(int argc, char** argv) {
     expect(g_log_deathlink_sent == 0, "a life lost without the hull at 0 sends no DeathLink");
     wf(RAM, a::kPlayerHealth, 0.0f);
     frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
-    expect(g_log_deathlink_sent == 1, "hull at 0 sends a DeathLink (%d sent)", g_log_deathlink_sent);
+    expect(g_log_deathlink_sent == 0, "game_over trigger: a death with lives to spare sends nothing");
     wf(RAM, a::kPlayerHealth, 100.0f);
+    wb(RAM, a::kLives, 1);
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    wf(RAM, a::kPlayerHealth, 0.0f);
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    expect(g_log_deathlink_sent == 1, "game_over trigger: the death on the last life sends (%d sent)",
+           g_log_deathlink_sent);
+    wf(RAM, a::kPlayerHealth, 100.0f);
+    wb(RAM, a::kLives, 3);
     frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
 
     // Objectives (the e2e seed has objective_checks on): objective 1 done, plus a stray bit past the count.

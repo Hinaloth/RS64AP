@@ -119,6 +119,7 @@ struct Session {
     int ship_logic = 0;            // 0 default ship only, 1 any listed ship
     bool objective_checks = false;
     bool death_link = false;
+    bool death_link_game_over = false;  // send only the death on the last life
 
     // Menus
     int confirmed_level = -1;
@@ -365,6 +366,7 @@ void on_connected(const uint8_t* rdram, ConnectedInfo info) {
     S.ship_logic = sd.value("ship_logic", 0);
     S.objective_checks = sd.value("objective_checks", 0) != 0;
     S.death_link = sd.value("death_link", 0) != 0;
+    S.death_link_game_over = sd.value("death_link_trigger", 0) == 1;
     if (S.death_link) g_net.enable_deathlink_tag();
     flush_locations();
     save_file();
@@ -585,9 +587,14 @@ int on_mission_frame(uint32_t, uint8_t* rdram, void* ctx, void*) {
 
     // DeathLink out: player 1's hull reaching 0 is a death. Watching lives misses it (a crash restarts the mission
     // from its checkpoint, re-running mission start) and counts aborts, which cost a life without a death.
+    // With the game_over trigger only the death on the last life sends: the counter still reads 1 on that
+    // frame and drops to 0 just after, when the mission ends in a game over.
     const float hull = rf(rdram, a::kPlayerHealth);
     if (S.hull_seen > 0.0f && hull <= 0.0f) {
-        if (S.death_link && S.connected && S.deathlink_grace == 0) {
+        const uint8_t lives = rb(rdram, a::kLives);
+        if (S.death_link && S.death_link_game_over && lives > 1) {
+            logf("died over %s, not on the last life; DeathLink waits for game over", d::kMissionNames[S.level]);
+        } else if (S.death_link && S.connected && S.deathlink_grace == 0) {
             g_net.send_deathlink(S.file.slot_name + " was shot down over " + d::kMissionNames[S.level]);
             logf("DeathLink sent (shot down over %s)", d::kMissionNames[S.level]);
         } else {

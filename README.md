@@ -27,10 +27,10 @@ A full seed has been played from start to goal on Windows against archipelago.gg
 | Completions, medals, upgrade pickups | Medal checks go out a few seconds after the debrief; a medal also sends every tier below it |
 | Objective checks (option, off by default) | Objective counts and order confirmed with the probe; tested in play only through the probe so far |
 | Upgrades, Replenishing Secondaries, filler, Medal Leniency | Filler waits for an active mission |
+| DeathLink (option, off by default) | Sends and receives; `death_link_trigger: game_over` sends only the death on your last life |
 
 | Not yet | |
 | --- | --- |
-| DeathLink | Built and tested without the game only |
 | Linux client | Built on Ubuntu 24.04 and tested without the game; not yet run with the Linux recomp |
 
 **Ship Logic** (`ship_logic`): `default_only` (the default) means a mission needs its default ship; `any_listed` also

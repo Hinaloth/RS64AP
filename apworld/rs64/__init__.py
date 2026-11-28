@@ -168,6 +168,7 @@ class RS64World(World):
             "upgrade_pickups": int(self.options.upgrade_pickups),
             "objective_checks": int(self.options.objective_checks),
             "death_link": int(self.options.death_link),
+            "death_link_trigger": int(self.options.death_link_trigger),
         }
 
     # ---- items ------------------------------------------------------------------------------------------------

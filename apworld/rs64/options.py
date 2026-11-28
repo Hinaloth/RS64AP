@@ -87,6 +87,19 @@ class UpgradesForGold(Range):
     default = 4
 
 
+class DeathLinkTrigger(Choice):
+    """Which of your deaths are sent to other DeathLink players. Only matters with DeathLink on. Deaths you
+    receive always shoot you down, whichever you pick.
+
+    every_life: every time you're shot down.
+    game_over: only when you're shot down on your last life, so deaths from others don't chain through
+    every one of your lives back to them."""
+    display_name = "DeathLink Trigger"
+    option_every_life = 0
+    option_game_over = 1
+    default = 0
+
+
 @dataclass
 class RS64Options(PerGameCommonOptions):
     start_inventory_from_pool: StartInventoryPool
@@ -100,3 +113,4 @@ class RS64Options(PerGameCommonOptions):
     objective_checks: ObjectiveChecks
     upgrades_for_gold: UpgradesForGold
     death_link: DeathLink
+    death_link_trigger: DeathLinkTrigger

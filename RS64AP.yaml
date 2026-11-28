@@ -22,3 +22,5 @@ Star Wars Rogue Squadron:
   objective_checks: false         # every mission objective is a check (49 more checks, mostly filler)
 
   death_link: false
+  death_link_trigger: every_life    # every_life, or game_over: only the death on your last life is sent
+                                  # (deaths you receive always shoot you down)

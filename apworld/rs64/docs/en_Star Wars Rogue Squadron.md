@@ -39,6 +39,12 @@ Either complete The Battle of Calamari, or complete a set number of missions (ca
 - Filler: Extra Life, Secondary Refill, Hull Repair, Temporary Invincibility (15 seconds). Filler waits until you
   are flying a mission.
 
+## DeathLink
+
+With DeathLink on, being shot down in a mission is sent to the other DeathLink players, and their deaths shoot you
+down when you're flying a mission (not in menus or cutscenes, and not right after you've respawned). With DeathLink
+Trigger set to `game_over`, only the death on your last life is sent; the deaths you receive still cost a life each.
+
 ## What does another world's item look like in Rogue Squadron?
 
 Checks are earned by flying, not by opening containers, so other worlds' items never appear in the game. A message

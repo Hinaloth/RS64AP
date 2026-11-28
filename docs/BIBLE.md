@@ -314,7 +314,8 @@ checked by the client against its own sent-location set.
 | `objective_checks` | on / off | off | DECIDED |
 | `upgrades_for_gold` | 0–8 | 4 | PROPOSED |
 | `ship_logic` | `default_only`, `any_listed` | `default_only` | DECIDED |
-| `death_link` | on / off | off | PROPOSED, milestone M8 |
+| `death_link` | on / off | off | DECIDED, works in play |
+| `death_link_trigger` | `every_life`, `game_over` | `every_life` | DECIDED |
 
 Standard AP options (`start_inventory`, `local_items`, `exclude_locations`, ...) come from
 `PerGameCommonOptions`.
@@ -559,8 +560,10 @@ MISSION` on the status line.
 
 ### 8.9 DeathLink (M8)
 
-- Send: on a life lost (`numLives` decrement in a mission), cause = `<slot> was shot down over
-  <mission>`.
+- Send: when player 1's hull reaches 0 in a mission (not on a lives decrement: a crash restarts the
+  mission, and an abort costs a life without a death), cause = `<slot> was shot down over <mission>`.
+  With `death_link_trigger: game_over`, only the death on the last life sends (the lives counter still
+  reads 1 on that frame).
 - Receive: queued like filler; applied by calling `applyPlayerCraftDamage` with lethal damage through
   `call` from a mission hook.
 - Never send a death caused by a received DeathLink.
@@ -736,6 +739,7 @@ Using Archipelago's `WorldTestBase`:
 
 | Date | Decision |
 | --- | --- |
+| 2026-11-28 | DeathLink confirmed in play both ways against DeathLinkipelago, along with Extra Life and Secondary Refill filler. New option `death_link_trigger`: `every_life` (default, as before) or `game_over`, which sends only the death on the last life, so players linked with other DeathLink games aren't sent back through every life. Play logs show the last-life death with the lives counter at 1, then 0 and a game-over result (3). Received deaths still always kill. |
 | 2026-11-27 | Mission passes are individual items, 19 of them, bonus missions included; one or more given at start. |
 | 2026-11-27 | Ships are individual items; the starting ship matches the starting mission so it can be finished. |
 | 2026-11-27 | Naboo N-1 is in the ship pool. |

@@ -87,7 +87,15 @@ class TestDeathLinkSlotData(RS64TestBase):
     def test_slot_data(self) -> None:
         slot = self.world.fill_slot_data()
         self.assertEqual(slot["death_link"], 1)
+        self.assertEqual(slot["death_link_trigger"], 0)  # every_life by default
         self.assertEqual(slot["world_version"], data.WORLD_VERSION)
+
+
+class TestDeathLinkGameOver(RS64TestBase):
+    options = {"death_link": True, "death_link_trigger": "game_over"}
+
+    def test_slot_data(self) -> None:
+        self.assertEqual(self.world.fill_slot_data()["death_link_trigger"], 1)
 
 
 class TestShipLogicDefault(RS64TestBase):
