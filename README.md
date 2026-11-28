@@ -58,8 +58,7 @@ Canyon (T-16).
   can receive every progression item.
 - "Upgrade pickups" sends a check when you pick up one of the upgrade boxes present in some of the missions. The box
   doesn't give you its upgrade anymore: the upgrades are items in the pool.
-- "Objectives" are sent when you complete one of the objectives found in each mission's pause menu, even if you then
-  fail or abort the mission. They are off by default, as they add 49 checks, mostly filled with filler.
+- "Objectives" are sent when you complete one of the objectives found in each mission's pause menu.
 
 ## Items
 
