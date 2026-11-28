@@ -65,9 +65,6 @@ class RS64World(World):
                                               or any(m["objectives"] is None for m in data.MISSIONS)):
             raise OptionError(f"{self.player_name}: Objective Checks is not available yet (work in progress: "
                               "which game flag each objective sets is still being mapped). Turn it off.")
-        if self.options.ship_logic == self.options.ship_logic.option_any_listed:
-            logger.warning(f"RS64: {self.player_name} uses Ship Logic any_listed; flying a replay ship on a "
-                           "mission's first visit is not confirmed in-game yet.")
         self.gating_ships = {s for m in data.MISSIONS for s in self.mission_ships(m)}
 
         pool = [m["id"] for m in data.MISSIONS
