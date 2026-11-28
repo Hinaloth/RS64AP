@@ -1,49 +1,81 @@
 # Star Wars: Rogue Squadron
 
-## What does randomization do to this game?
+Setup: [setup guide](https://github.com/Hinaloth/RS64AP/blob/main/SETUP.md).
 
-Missions no longer unlock in order. Each of the 19 missions (16 campaign, 3 bonus) needs its own **Mission Pass**,
-and each ship is its own item, so you can only fly a mission when you hold its pass and a ship the mission allows.
-The eight weapon and shield upgrades are items too.
+## Goal
 
-You start with one to three missions open, each with a ship that can fly it.
+To finish the AP, you have two options:
 
-By default (Ship Logic: default_only) each mission needs its default ship, the one vanilla gives you the first
-time. With any_listed, the ships vanilla allows on a replay count too. The Millennium Falcon, TIE Interceptor and
-Naboo N-1 are only replay ships, so under default_only they're useful items rather than keys.
+- `calamari` is the default. Complete the mission "The Battle of Calamari" and you'll have won your game.
+- `missions` requires you to complete a set number of missions, chosen during the creation of your YAML.
 
-## What is the goal?
+## How a game plays
 
-Either complete The Battle of Calamari, or complete a set number of missions (campaign and bonus both count).
+- You start with between 1 and 3 missions open (depending on your YAML options), each with a ship that can fly it
+  (unless a ship you already start with can). Note that `starting_mission_pool: campaign` will only draw campaign
+  missions to start from; `any` can also draw from the bonus missions.
+- Every mission is listed in the mission select menu, but you won't be able to launch one without its pass. A status
+  line above the mission icon says "NO MISSION PASS" or "NO SHIP FOR THIS MISSION" when a mission is currently
+  unavailable. Bonus missions open with their pass item, no passcode is needed.
+- The hangar will show every ship, but you will only be able to use the ones you have received as items, and only
+  those your ship logic counts for that mission. Any attempt to select a ship not available will play a buzz. The
+  mission select screen shows all the ships as possible even if not unlocked yet, rather than what you actually own
+  during your run.
 
-## What are the checks?
+Ship logic is as such:
 
-- Completing each mission.
-- Medals on each mission: bronze, silver and gold are always checks, and a medal sends every tier below it. Medal
-  Checks sets the best tier that can hold useful items; the tiers above it only hold filler.
-- The hidden upgrade pickup in missions that have one (optional, on by default). Picking it up sends the check; the
-  upgrade itself comes from the item pool.
-- Each mission objective (optional, not available yet).
+- `default_only` (default): a mission is in logic only with its default ship.
+- `any_listed`: allows you to run a mission with any unlocked ship compatible with the mission in vanilla, even on a
+  first visit. Some of them make a mission much harder.
+- Default ships:
+  - X-wing: Mos Eisley, Barkhesh, Gerrard V, Jade Moon, Rescue on Kessel, Prisons of Kessel, Chandrila, Seerdon's
+    Revenge, Trench Run.
+  - A-wing: Nonnah, Taloraan.
+  - Y-wing: Kile II, Sullust.
+  - V-wing: Calamari.
+  - Snowspeeder: Corellia, Construction Yards, Fest, Hoth.
+  - T-16 Skyhopper: Beggar's Canyon.
 
-## What items are there?
+Some missions only allow for one ship to be used because of objectives that wouldn't be completable without them:
+Corellia, Construction Yards, Fest and Hoth (Snowspeeder); Rescue on Kessel and Trench Run (X-wing); Beggar's
+Canyon (T-16).
 
-- 19 Mission Passes.
-- 9 ships: X-wing, Y-wing, A-wing, V-wing, Snowspeeder, Millennium Falcon, TIE Interceptor, T-16 Skyhopper and
-  Naboo N-1 Starfighter.
-- 8 upgrades: Advanced Lasers, Advanced Concussion Missiles, Seeker Concussion Missiles, Advanced Proton Torpedoes,
-  Seeker Proton Torpedoes, Seeker Cluster Missiles, Advanced Bombs and Advanced Shields.
-- Replenishing Secondaries: one secondary weapon back every 15 seconds in missions.
-- Medal Leniency, one per mission: that mission's medals get about a third easier (more time allowed, fewer kills,
-  lower accuracy and friendlies needed).
-- Filler: Extra Life, Secondary Refill, Hull Repair, Temporary Invincibility (15 seconds). Filler waits until you
-  are flying a mission.
+## Locations
 
-## What does another world's item look like in Rogue Squadron?
+- "Completion" sends upon finishing a mission to the end. This is the default type of location sent.
+- "Medals" are given out by obtaining a certain medal on a mission. Bronze, silver and gold each give one check, and
+  retroactively give the lower ranks as well. `medal_checks` picks the highest medal that can hold progression or
+  useful items; medals above it only hold filler. Bronze is the minimal option and still ensures that a solo seed
+  can receive every progression item.
+- "Upgrade pickups" sends a check when you pick up one of the upgrade boxes present in some of the missions. The box
+  doesn't give you its upgrade anymore: the upgrades are items in the pool.
+- "Objectives" are sent when you complete one of the objectives found in each mission's pause menu.
 
-Checks are earned by flying, not by opening containers, so other worlds' items never appear in the game. A message
-says what was sent.
+## Items
 
-## Passcodes
+- "Mission Pass" unlocks the mission it's named after. These items are marked as Progression.
+- "Ship" unlocks the ship it's named after. These items are marked as Progression, except for ships no mission needs
+  under your ship logic (with `default_only`: the Millennium Falcon, TIE Interceptor and Naboo N-1), which are
+  marked as Useful.
+- "Upgrades" give you one of the upgrades of the game. These items are marked as Useful. To note: this
+  AP introduces a new upgrade, the "Replenishing Secondaries", which allows you to regain a secondary ammo every 15
+  seconds.
+- "Medal Leniency" is another new item, a filler, one per mission, that makes the named mission's medal requirements
+  easier to meet. The time limit is extended by ×1.5; kills, accuracy and friendlies needed are reduced by ×⅔.
+- "Filler" is common items used to fill out any remaining locations not used by your Progression or Useful items.
+  These apply instantly upon getting them during your mission; any received during a menu will be applied upon
+  starting/resuming a mission.
+  - Extra Life (most common): grants you 1 extra life, up to 9.
+  - Secondary Refill: refills your secondaries to full.
+  - Temporary Invincibility: allows you to take no damage for 15 s. A received DeathLink will still kill you.
+  - Hull Repair (rarest): refills your hull to full.
+- When receiving an item, a text line will appear to say what and from whom.
 
-Passcodes that unlock missions or ships (GAMEFLO!, FARMBOY, TIEDUP, HALIFAX? / !YNGWIE!, WOMPRAT!, WOISTHAN,
-DEADDACK, CHICKEN) are undone by the client. Other passcodes work as usual.
+## DeathLink
+
+- `death_link` sends a DeathLink when you're shot down in a mission. Aborting a mission doesn't
+  send one.
+- `death_link_trigger` gives you control of when you send a DeathLink: `every_life` (default) sends one with your
+  every death; `game_over` sends only the death on your last life.
+- Received DeathLinks will cause you to crash and explode as though you had been shot down, but only while you're
+  flying a mission. Received deaths always cost a life, up to the number you have left.

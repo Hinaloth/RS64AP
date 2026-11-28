@@ -37,11 +37,16 @@ jobs:
           cmake -S client -B build/client -G Ninja -DCMAKE_BUILD_TYPE=Release -DRS64AP_BUILD_HARNESS=ON -DRS64AP_REQUIRE_SSL=ON
           cmake --build build/client
 
+      - name: Build probe mod
+        run: |
+          cmake -S probes/rs64ap-probe -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/probe
+
       - name: End-to-end (harness against a local MultiServer)
         run: python tools/e2e.py --ap ap --build build/client
 
       - name: Package
-        run: python tools/package.py --client build/client
+        run: python tools/package.py --client build/client --probe build/probe
 
       - uses: actions/upload-artifact@v4
         with:
@@ -67,10 +72,17 @@ jobs:
             -DVCPKG_TARGET_TRIPLET=x64-windows-static -DRS64AP_REQUIRE_SSL=ON
           cmake --build build/client --config Release
 
+      - name: Build probe mod
+        run: |
+          cmake -S probes/rs64ap-probe -B build/probe -A x64
+          cmake --build build/probe --config Release
+
       - name: Package
-        run: python tools/package.py --client build/client
+        run: python tools/package.py --client build/client --probe build/probe
 
       - uses: actions/upload-artifact@v4
         with:
           name: rs64ap-windows
-          path: dist/rs64ap-client-windows.zip
+          path: |
+            dist/rs64ap-client-windows.zip
+            dist/rs64ap-probe-windows.zip

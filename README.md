@@ -1,143 +1,112 @@
 # RS64AP
-Archipelago Randomizer Implementation for RogueSquadron64Recomp
 
-An [Archipelago](https://archipelago.gg) multiworld randomizer for *Star Wars: Rogue Squadron* (N64), played on
-[RogueSquadron64Recomp](https://github.com/MikeSemicolonD/RogueSquadron64Recomp).
+## What is RS64AP?
 
-- **Items:** 19 Mission Passes (campaign and bonus missions), 9 ships (Naboo N-1 and T-16 included), 8 upgrades,
-  Replenishing Secondaries, a Medal Leniency per mission, and filler (Extra Life, Secondary Refill, Hull Repair,
-  Temporary Invincibility).
-- **Checks:** mission completions, bronze / silver / gold medals on every mission, and the hidden upgrade pickups.
-  Objective checks are **work in progress** (see below).
-- **Goal:** finish The Battle of Calamari, or finish a set number of missions.
+Rogue Squadron 64 Archipelago is a randomizer for
+[RogueSquadron64Recomp](https://github.com/MikeSemicolonD/RogueSquadron64Recomp). It makes missions, ships and
+upgrades into items to be found in the game (or games, if played in a multiworld). Completing missions, earning
+medals, picking up upgrades and completing objectives are locations in which an item may be found.
 
-**Download:** the [latest release](https://github.com/Hinaloth/RS64AP/releases/latest) has `rs64.apworld`, the
-`RS64AP.yaml` template, and the client mod for Windows and Linux. The full source is in this repository (see
-[Repository layout](#repository-layout)); the design and build notes are in [docs/BIBLE.md](docs/BIBLE.md).
+To find out what Archipelago is, please visit [archipelago.gg](https://archipelago.gg).
 
-## Status: alpha, playable
+Setup is in [SETUP.md](SETUP.md).
 
-A full seed has been played from start to goal on Windows against archipelago.gg.
+## Goal
 
-| Works in play | Notes |
-| --- | --- |
-| Connecting, pilot binding, reconnecting | A pilot is bound to one seed; it reconnects by itself while the server stays the same |
-| Mission Passes and mission select | Missions without a pass are listed but can't be confirmed |
-| Ships and the hangar | The hangar offers only owned ships the seed's logic counts for that mission (N-1 included) |
-| Completions, medals, upgrade pickups | Medal checks go out a few seconds after the debrief; a medal also sends every tier below it |
-| Upgrades, Replenishing Secondaries, filler, Medal Leniency | Filler waits for an active mission |
+To finish the AP, you have two options:
 
-| Not yet | |
-| --- | --- |
-| Objective checks (**WIP**) | The `objective_checks` option exists but isn't usable yet: it needs each mission's objective count and how objectives map to the game's flags. Generation stops with an error if it's turned on, so leave it `false` |
-| The Battle of Hoth's ships | Assumed Snowspeeder only |
-| DeathLink | Built and tested without the game only |
-| Linux client | Built on Ubuntu 24.04 and tested without the game; not yet run with the Linux recomp |
+- `calamari` is the default. Complete the mission "The Battle of Calamari" and you'll have won your game.
+- `missions` requires you to complete a set number of missions, chosen during the creation of your YAML.
 
-**Ship Logic** (`ship_logic`): `default_only` (the default) means a mission needs its default ship; `any_listed` also
-counts the ships vanilla allows on a replay. Both work in play.
+## How a game plays
 
-## Installing and playing
+- You start with between 1 and 3 missions open (depending on your YAML options), each with a ship that can fly it
+  (unless a ship you already start with can). Note that `starting_mission_pool: campaign` will only draw campaign
+  missions to start from; `any` can also draw from the bonus missions.
+- Every mission is listed in the mission select menu, but you won't be able to launch one without its pass. A status
+  line above the mission icon says "NO MISSION PASS" or "NO SHIP FOR THIS MISSION" when a mission is currently
+  unavailable. Bonus missions open with their pass item, no passcode is needed.
+- The hangar will show every ship, but you will only be able to use the ones you have received as items, and only
+  those your ship logic counts for that mission. Any attempt to select a ship not available will play a buzz. The
+  mission select screen shows all the ships as possible even if not unlocked yet, rather than what you actually own
+  during your run.
 
-1. Put `rs64.apworld` in Archipelago's `custom_worlds` folder (or double-click it). Generate a seed from a YAML based on
-   `RS64AP.yaml`.
-2. Unzip the client for your system into the game's `mods/` folder, so you have `mods/rs64ap/mod.json`.
-3. Start the game, press **F6**, enable **Archipelago (RS64AP)** and restart the game.
-4. Press **F6** again, click **Archipelago (RS64AP)** to expand it, and fill in **Server** (e.g. `archipelago.gg:38281`),
-   **Slot name** and **Password** (if any). These text fields are only editable in the F6 window, not in the in-game
-   MODS settings page.
-5. Main menu → **ARCHIPELAGO** → pick a **fresh pilot** → **CONNECT**. The pilot is bound to that seed and the client
-   rewrites its unlocks, so don't use a pilot you care about. Next time, the same pilot reconnects by itself if the
-   server hasn't changed; with a new server address the page waits for CONNECT (and **FORGET PILOT SEED** unbinds it).
+Ship logic is as such:
 
-The player guide is [apworld/rs64/docs/setup_en.md](apworld/rs64/docs/setup_en.md).
+- `default_only` (default): a mission is in logic only with its default ship.
+- `any_listed`: allows you to run a mission with any unlocked ship compatible with the mission in vanilla, even on a
+  first visit. Some of them make a mission much harder.
+- Default ships:
+  - X-wing: Mos Eisley, Barkhesh, Gerrard V, Jade Moon, Rescue on Kessel, Prisons of Kessel, Chandrila, Seerdon's
+    Revenge, Trench Run.
+  - A-wing: Nonnah, Taloraan.
+  - Y-wing: Kile II, Sullust.
+  - V-wing: Calamari.
+  - Snowspeeder: Corellia, Construction Yards, Fest, Hoth.
+  - T-16 Skyhopper: Beggar's Canyon.
 
-## Repository layout
+Some missions only allow for one ship to be used because of objectives that wouldn't be completable without them:
+Corellia, Construction Yards, Fest and Hoth (Snowspeeder); Rescue on Kessel and Trench Run (X-wing); Beggar's
+Canyon (T-16).
 
-```
-apworld/rs64/        the Archipelago world (Python): items, locations, options, logic, tests, player docs
-client/              the in-game client, a native mod for the recomp (C++)
-  src/               connection (net), per-pilot state (pilot), game hooks and rules (mod)
-  src/generated/     generated from data/ — do not edit
-  tests/harness.cpp  loads the mod with a fake host API for tests
-  cmake/             MinGW-w64 toolchain for cross-building Windows from Linux
-data/rs64ap.json     missions, ships, upgrades, items, IDs: the single source of truth
-tools/               gen_data.py (codegen), e2e.py (end-to-end test), package.py (release zips)
-docs/BIBLE.md        design, game facts, decision log
-RS64AP.yaml          player options template
-```
+## Locations
 
-After editing `data/rs64ap.json`, run `python tools/gen_data.py`. CI fails when the generated files are stale.
+- "Completion" sends upon finishing a mission to the end. This is the default type of location sent.
+- "Medals" are given out by obtaining a certain medal on a mission. Bronze, silver and gold each give one check, and
+  retroactively give the lower ranks as well. `medal_checks` picks the highest medal that can hold progression or
+  useful items; medals above it only hold filler. Bronze is the minimal option and still ensures that a solo seed
+  can receive every progression item.
+- "Upgrade pickups" sends a check when you pick up one of the upgrade boxes present in some of the missions. The box
+  doesn't give you its upgrade anymore: the upgrades are items in the pool.
+- "Objectives" are sent when you complete one of the objectives found in each mission's pause menu.
 
-## Building
+## Items
 
-### apworld
+- "Mission Pass" unlocks the mission it's named after. These items are marked as Progression.
+- "Ship" unlocks the ship it's named after. These items are marked as Progression, except for ships no mission needs
+  under your ship logic (with `default_only`: the Millennium Falcon, TIE Interceptor and Naboo N-1), which are
+  marked as Useful.
+- "Upgrades" give you one of the upgrades of the game. These items are marked as Useful. To note: this
+  AP introduces a new upgrade, the "Replenishing Secondaries", which allows you to regain a secondary ammo every 15
+  seconds.
+- "Medal Leniency" is another new item, a filler, one per mission, that makes the named mission's medal requirements
+  easier to meet. The time limit is extended by ×1.5; kills, accuracy and friendlies needed are reduced by ×⅔.
+- "Filler" is common items used to fill out any remaining locations not used by your Progression or Useful items.
+  These apply instantly upon getting them during your mission; any received during a menu will be applied upon
+  starting/resuming a mission.
+  - Extra Life (most common): grants you 1 extra life, up to 9.
+  - Secondary Refill: refills your secondaries to full.
+  - Temporary Invincibility: allows you to take no damage for 15 s. A received DeathLink will still kill you.
+  - Hull Repair (rarest): refills your hull to full.
+- When receiving an item, a text line will appear to say what and from whom.
 
-```sh
-python tools/package.py        # writes dist/rs64.apworld and dist/RS64AP.yaml
-```
+## DeathLink
 
-### Client mod
+- `death_link` sends a DeathLink when you're shot down in a mission. Aborting a mission doesn't
+  send one.
+- `death_link_trigger` gives you control of when you send a DeathLink: `every_life` (default) sends one with your
+  every death; `game_over` sends only the death on your last life.
+- Received DeathLinks will cause you to crash and explode as though you had been shot down, but only while you're
+  flying a mission. Received deaths always cost a life, up to the number you have left.
 
-Needs CMake 3.20+, a C++17 compiler, OpenSSL 3 (for `wss://`, which archipelago.gg uses) and zlib (compressed
-connections; the server warns without it). The other dependencies (apclientpp, websocketpp, asio, nlohmann/json,
-and the recomp's `host_api.h`) are fetched at configure time.
+## Known limitations
 
-**Linux**
+The Linux client has never been tested yet. If you do, please reach out and tell me.
 
-```sh
-sudo apt install libssl-dev zlib1g-dev
-cmake -S client -B build/client -DCMAKE_BUILD_TYPE=Release
-cmake --build build/client
-```
+## Trackers
 
-**Windows (MSVC + vcpkg)**
+Universal Tracker works if you wish to use it.
 
-```powershell
-vcpkg install openssl:x64-windows-static zlib:x64-windows-static
-cmake -S client -B build/client -A x64 -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static
-cmake --build build/client --config Release
-```
+## Credits and licence
 
-**Windows, cross-compiled from Linux (MinGW-w64)**: build OpenSSL 3 and zlib statically for MinGW first, then
+RogueSquadron64Recomp by MikeSemicolonD, apclientpp by black-sliver, and Archipelago.
 
-```sh
-cmake -S client -B build/win -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_TOOLCHAIN_FILE=$PWD/client/cmake/mingw-w64-x86_64.cmake -DOPENSSL_ROOT_DIR=<mingw OpenSSL prefix> \
-  -DZLIB_ROOT=<mingw zlib prefix> -DZLIB_USE_STATIC_LIBS=ON
-cmake --build build/win
-```
+The client and probe are GPL-3.0-or-later; everything else is MIT.
 
-The release's Windows DLL is built this way: it links its runtime, OpenSSL and zlib statically and needs only
-Windows system DLLs.
+Working on RS64AP itself: see [DEVELOPMENT.md](DEVELOPMENT.md).
 
-The mod folder is `build/client/rs64ap/`. `python tools/package.py --client build/client` zips it into `dist/`.
+## AI usage
 
-Options: `-DRS64_RECOMP_DIR=<recomp checkout>` uses a local `host_api.h` instead of downloading it.
-`-DRS64AP_REQUIRE_SSL=ON` fails the build when OpenSSL is missing; without OpenSSL the client only reaches `ws://`
-servers.
-
-## Testing
-
-```sh
-# apworld: from an Archipelago source checkout with requirements installed
-ln -s "$PWD/apworld/rs64" <Archipelago>/worlds/rs64
-cd <Archipelago> && python -m pytest worlds/rs64/test
-
-# client, without the game: build with the harness, then
-cmake -S client -B build/client -DRS64AP_BUILD_HARNESS=ON && cmake --build build/client
-python tools/e2e.py --ap <Archipelago> --build build/client
-```
-
-In the game, keep the recomp's log (stderr): the client's `[rs64ap]` lines show what it sends and receives, and the
-`[rs64ap] probe` lines report game facts still being mapped (hangar masks, pickups, objectives, medals).
-
-## License
-
-- `client/` is **GPL-3.0-or-later**. It's a plugin loaded into RogueSquadron64Recomp (GPL-3.0) and built against its
-  header. See [client/NOTICE.md](client/NOTICE.md) for bundled third-party licenses.
-- Everything else (apworld, data, tools, docs) is **MIT** ([LICENSE](LICENSE)), the usual license for Archipelago
-  worlds.
-
-You need your own legally obtained copy of the game. This project isn't affiliated with Lucasfilm, Nintendo,
-Factor 5 or the recomp's authors.
+This APworld and mod client was written with Claude's help. If you wish to not use LLM-written APworlds, please feel
+free to write your own. If you do, please feel free to send me a link so I can add it here to redirect people
+towards your work.

@@ -32,6 +32,9 @@ Star Wars Rogue Squadron:
   starting_missions: 2
   medal_checks: silver
   upgrade_pickups: true
+  objective_checks: true
+  death_link: true
+  death_link_trigger: game_over
   start_inventory:
     Replenishing Secondaries: 1
     Temporary Invincibility: 1

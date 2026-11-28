@@ -40,13 +40,15 @@ class TestMatrix(unittest.TestCase):
             (1, 2, 3),               # starting_missions
             ("campaign", "any"),
             ("default_only", "any_listed"),
+            (False, True),           # objective_checks
         )
-        for goal, medals, pickups, starts, pool, ships in combos:
-            for seed in range(3):
+        for goal, medals, pickups, starts, pool, ships, objectives in combos:
+            for seed in range(2):
                 with self.subTest(goal=goal, medals=medals, pickups=pickups, starts=starts, pool=pool, ships=ships,
-                                  seed=seed):
+                                  objectives=objectives, seed=seed):
                     mw = generate(seed, goal=goal, medal_checks=medals, upgrade_pickups=pickups,
-                                  starting_missions=starts, starting_mission_pool=pool, ship_logic=ships)
+                                  starting_missions=starts, starting_mission_pool=pool, ship_logic=ships,
+                                  objective_checks=objectives)
                     self.assertTrue(mw.can_beat_game(CollectionState(mw)))
                     self.assertTrue(mw.has_beaten_game(mw.get_all_state()))
                     for loc in mw.get_locations(1):

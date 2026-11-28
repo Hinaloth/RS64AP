@@ -50,7 +50,11 @@ int g_failures = 0;
 uint32_t g_craft_mask = 0x7Fu;
 std::vector<uint32_t> g_damage_calls;
 
-void hlog(const char* line) { std::fprintf(stderr, "%s\n", line); }
+int g_log_deathlink_sent = 0;
+void hlog(const char* line) {
+    if (std::strstr(line, "DeathLink sent (")) ++g_log_deathlink_sent;  // not the network thread's "sent:" echo
+    std::fprintf(stderr, "%s\n", line);
+}
 int add_hook(uint32_t hook, rs64_hook_fn fn, void* user) { g_hooks[hook].push_back({fn, user}); return 0; }
 int add_text(const char* n, rs64_text_fn fn, void* u) { g_texts[n] = {fn, u}; return 0; }
 int add_input(rs64_input_fn, void*) { return 0; }
@@ -286,6 +290,36 @@ int main(int argc, char** argv) {
     }
     ww(RAM, a::kMedalInfoPtr, table);
 
+    // DeathLink out (the e2e seed has death_link on with the game_over trigger): only the hull reaching 0 on the
+    // last life sends; an abort-style life loss and a death with lives to spare don't.
+    wf(RAM, a::kPlayerHealth, 100.0f);
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    g_log_deathlink_sent = 0;
+    wb(RAM, a::kLives, 2);
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    expect(g_log_deathlink_sent == 0, "a life lost without the hull at 0 sends no DeathLink");
+    wf(RAM, a::kPlayerHealth, 0.0f);
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    expect(g_log_deathlink_sent == 0, "game_over trigger: a death with lives to spare sends nothing");
+    wf(RAM, a::kPlayerHealth, 100.0f);
+    wb(RAM, a::kLives, 1);
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    wf(RAM, a::kPlayerHealth, 0.0f);
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    expect(g_log_deathlink_sent == 1, "game_over trigger: the death on the last life sends (%d sent)",
+           g_log_deathlink_sent);
+    wf(RAM, a::kPlayerHealth, 100.0f);
+    wb(RAM, a::kLives, 3);
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+
+    // Objectives (the e2e seed has objective_checks on): objective 1 done, plus a stray bit past the count.
+    {
+        const int count = d::kObjectiveCount[level];
+        wb(RAM, a::kObjectiveCount, (uint8_t)count);
+        wb(RAM, a::kObjectivesDone, (uint8_t)(0x01u | (1u << count)));
+        frames(3, RS64_HOOK_MISSION_FRAME_NPCS);
+    }
+
     // A scripted end: the result byte says success, no success request.
     wb(RAM, a::kMissionResult, 1);
     fire(RS64_HOOK_MISSION_END);
@@ -315,6 +349,9 @@ int main(int argc, char** argv) {
     expect(has(d::location_id(level, d::kSlotBronze)), "bronze check recorded");
     expect(has(d::location_id(level, d::kSlotSilver)), "silver check recorded");
     expect(has(d::location_id(level, d::kSlotGold)), "gold check recorded");
+    expect(has(d::location_id(level, d::kSlotObjective0)), "objective 1 check recorded");
+    expect(!has(d::location_id(level, d::kSlotObjective0 + d::kObjectiveCount[level])),
+           "bit past the objective count ignored");
     expect(!d::kMissionPickup[level] || has(d::location_id(level, d::kSlotPickup)), "pickup check recorded");
     expect(pilot.find("\"unsent\": []") != std::string::npos, "nothing left unsent");
     std::fprintf(stderr, "last message: %s\n", text("ap_last").c_str());

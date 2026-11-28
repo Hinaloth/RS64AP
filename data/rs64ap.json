@@ -1,14 +1,17 @@
 {
   "//": "Single source of truth for RS64AP. Run `python tools/gen_data.py` after editing: it writes apworld/rs64/data.py and client/src/generated/rs64ap_data.h. IDs follow docs/BIBLE.md section 9.2 and must never change once released.",
   "game": "Star Wars Rogue Squadron",
-  "world_version": "0.1.0",
+  "world_version": "1.0.0",
   "id_base": 640000,
   "verified": {
-    "//": "false = provisional data waiting on a spike (docs/BIBLE.md section 11). The client's probe log (ROGUESQ AP probe lines) prints the real values.",
+    "//": "false = data still being confirmed (docs/BIBLE.md section 11). The rs64ap-probe mod and tools/probe.py collect it.",
     "allowed_ships": true,
-    "pickups": false,
-    "objectives": false,
-    "//ships": "default_ship and replay_ships from play (2026-11-27). Hoth assumed Snowspeeder only. Whether replay ships can launch on a first visit is unverified (spike S3)."
+    "pickups": true,
+    "objectives": true,
+    "//pickups": "Every flagged pickup sends its check in play (2026-11-28); the upgrade itself is applied by the game after the mission ends, as in vanilla.",
+    "//ships": "default_ship and replay_ships from play (2026-11-27); the probe's craft masks (2026-11-28) match every default ship and confirm Hoth is Snowspeeder only. Replay ships launch on a first visit with the client's all-craft unlock (play, 2026-11-28).",
+    "objective_counts": true,
+    "//objectives": "Counts from the probe (2026-11-28). Objective n is flag bit n-1 (play logs of Mos Eisley, Barkhesh, Nonnah, 2026-11-28): bits below the count are the objectives; hidden bits only mean 'not shown yet', and a hidden bit at or past the count (Nonnah 0x04) clears without an objective."
   },
   "missions": [
     {
@@ -16,7 +19,7 @@
       "name": "Ambush at Mos Eisley",
       "kind": "campaign",
       "pickup": false,
-      "objectives": null,
+      "objectives": 4,
       "default_ship": "X-wing",
       "replay_ships": [
         "A-wing",
@@ -31,7 +34,7 @@
       "name": "Rendezvous on Barkhesh",
       "kind": "campaign",
       "pickup": false,
-      "objectives": null,
+      "objectives": 1,
       "default_ship": "X-wing",
       "replay_ships": [
         "A-wing",
@@ -46,7 +49,7 @@
       "name": "The Search for the Nonnah",
       "kind": "campaign",
       "pickup": true,
-      "objectives": null,
+      "objectives": 2,
       "default_ship": "A-wing",
       "replay_ships": [
         "X-wing",
@@ -61,7 +64,7 @@
       "name": "Defection at Corellia",
       "kind": "campaign",
       "pickup": true,
-      "objectives": null,
+      "objectives": 4,
       "default_ship": "Snowspeeder",
       "replay_ships": []
     },
@@ -70,7 +73,7 @@
       "name": "Liberation of Gerrard V",
       "kind": "campaign",
       "pickup": false,
-      "objectives": null,
+      "objectives": 3,
       "default_ship": "X-wing",
       "replay_ships": [
         "A-wing",
@@ -85,7 +88,7 @@
       "name": "The Jade Moon",
       "kind": "campaign",
       "pickup": true,
-      "objectives": null,
+      "objectives": 3,
       "default_ship": "X-wing",
       "replay_ships": [
         "A-wing",
@@ -100,7 +103,7 @@
       "name": "Imperial Construction Yards",
       "kind": "campaign",
       "pickup": false,
-      "objectives": null,
+      "objectives": 3,
       "default_ship": "Snowspeeder",
       "replay_ships": []
     },
@@ -109,7 +112,7 @@
       "name": "Assault on Kile II",
       "kind": "campaign",
       "pickup": true,
-      "objectives": null,
+      "objectives": 3,
       "default_ship": "Y-wing",
       "replay_ships": [
         "Millennium Falcon",
@@ -122,7 +125,7 @@
       "name": "Rescue on Kessel",
       "kind": "campaign",
       "pickup": false,
-      "objectives": null,
+      "objectives": 2,
       "default_ship": "X-wing",
       "replay_ships": []
     },
@@ -131,7 +134,7 @@
       "name": "Prisons of Kessel",
       "kind": "campaign",
       "pickup": true,
-      "objectives": null,
+      "objectives": 2,
       "default_ship": "X-wing",
       "replay_ships": [
         "A-wing",
@@ -146,7 +149,7 @@
       "name": "Battle Above Taloraan",
       "kind": "campaign",
       "pickup": true,
-      "objectives": null,
+      "objectives": 2,
       "default_ship": "A-wing",
       "replay_ships": [
         "X-wing",
@@ -160,7 +163,7 @@
       "name": "Escape from Fest",
       "kind": "campaign",
       "pickup": true,
-      "objectives": null,
+      "objectives": 4,
       "default_ship": "Snowspeeder",
       "replay_ships": []
     },
@@ -169,7 +172,7 @@
       "name": "Blockade on Chandrila",
       "kind": "campaign",
       "pickup": true,
-      "objectives": null,
+      "objectives": 2,
       "default_ship": "X-wing",
       "replay_ships": [
         "A-wing",
@@ -184,7 +187,7 @@
       "name": "Raid on Sullust",
       "kind": "campaign",
       "pickup": true,
-      "objectives": null,
+      "objectives": 2,
       "default_ship": "Y-wing",
       "replay_ships": [
         "Millennium Falcon",
@@ -197,7 +200,7 @@
       "name": "Moff Seerdon's Revenge",
       "kind": "campaign",
       "pickup": true,
-      "objectives": null,
+      "objectives": 4,
       "default_ship": "X-wing",
       "replay_ships": [
         "A-wing",
@@ -212,7 +215,7 @@
       "name": "The Battle of Calamari",
       "kind": "final",
       "pickup": false,
-      "objectives": null,
+      "objectives": 2,
       "default_ship": "V-wing",
       "replay_ships": [
         "X-wing",
@@ -227,7 +230,7 @@
       "name": "Beggar's Canyon",
       "kind": "bonus",
       "pickup": false,
-      "objectives": null,
+      "objectives": 1,
       "default_ship": "T-16 Skyhopper",
       "replay_ships": []
     },
@@ -236,7 +239,7 @@
       "name": "The Death Star Trench Run",
       "kind": "bonus",
       "pickup": false,
-      "objectives": null,
+      "objectives": 2,
       "default_ship": "X-wing",
       "replay_ships": []
     },
@@ -245,7 +248,7 @@
       "name": "The Battle of Hoth",
       "kind": "bonus",
       "pickup": false,
-      "objectives": null,
+      "objectives": 3,
       "default_ship": "Snowspeeder",
       "replay_ships": []
     }

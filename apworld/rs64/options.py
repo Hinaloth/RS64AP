@@ -46,8 +46,8 @@ class ShipLogic(Choice):
     """Which ships the logic lets you fly a mission with.
 
     default_only: only the mission's default ship (vanilla: the other ships open after a first completion).
-    any_listed: the default ship or any ship vanilla allows on a replay. Needs the game to offer those ships on a first
-    visit, which is not confirmed yet."""
+    any_listed: the default ship or any ship vanilla allows on a replay, even on a first visit. Some of those ships
+    make a mission much harder than its default one."""
     display_name = "Ship Logic"
     option_default_only = 0
     option_any_listed = 1
@@ -73,8 +73,8 @@ class UpgradePickups(DefaultOnToggle):
 
 
 class ObjectiveChecks(Toggle):
-    """Each mission objective is a check. Adds many checks, most of them filler.
-    Not available yet: needs the per-mission objective counts (spike S6)."""
+    """Each mission objective is a check (49 in all), sent as soon as the objective is done, even if the mission
+    is then failed or aborted. Adds many checks, most of them filler."""
     display_name = "Objective Checks"
 
 
@@ -85,6 +85,19 @@ class UpgradesForGold(Range):
     range_start = 0
     range_end = 8
     default = 4
+
+
+class DeathLinkTrigger(Choice):
+    """Which of your deaths are sent to other DeathLink players. Only matters with DeathLink on. Deaths you
+    receive always shoot you down, whichever you pick.
+
+    every_life: every time you're shot down.
+    game_over: only when you're shot down on your last life, so deaths from others don't chain through
+    every one of your lives back to them."""
+    display_name = "DeathLink Trigger"
+    option_every_life = 0
+    option_game_over = 1
+    default = 0
 
 
 @dataclass
@@ -100,3 +113,4 @@ class RS64Options(PerGameCommonOptions):
     objective_checks: ObjectiveChecks
     upgrades_for_gold: UpgradesForGold
     death_link: DeathLink
+    death_link_trigger: DeathLinkTrigger

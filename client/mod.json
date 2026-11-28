@@ -3,7 +3,7 @@
   "id": "rs64ap",
   "display_name": "Archipelago (RS64AP)",
   "description": "Archipelago multiworld randomizer client. Main menu > ARCHIPELAGO, pick a fresh pilot, CONNECT. Set the server and slot below first. The pilot you connect is bound to that seed and its unlocks are rewritten by the client.",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "authors": ["Hinaloth", "RS64AP contributors"],
   "minimum_recomp_version": "0.0.0",
   "enabled_by_default": false,

@@ -61,12 +61,10 @@ class RS64World(World):
     # ---- generation -------------------------------------------------------------------------------------------
 
     def generate_early(self) -> None:
-        if self.options.objective_checks and any(m["objectives"] is None for m in data.MISSIONS):
-            raise OptionError(f"{self.player_name}: Objective Checks is not available yet "
-                              "(per-mission objective counts are still unknown). Turn it off.")
-        if self.options.ship_logic == self.options.ship_logic.option_any_listed:
-            logger.warning(f"RS64: {self.player_name} uses Ship Logic any_listed; flying a replay ship on a "
-                           "mission's first visit is not confirmed in-game yet.")
+        if self.options.objective_checks and (not data.VERIFIED.get("objectives")
+                                              or any(m["objectives"] is None for m in data.MISSIONS)):
+            raise OptionError(f"{self.player_name}: Objective Checks is not available yet (work in progress: "
+                              "which game flag each objective sets is still being mapped). Turn it off.")
         self.gating_ships = {s for m in data.MISSIONS for s in self.mission_ships(m)}
 
         pool = [m["id"] for m in data.MISSIONS
@@ -88,8 +86,15 @@ class RS64World(World):
             flyable = [m["id"] for m in data.MISSIONS
                        if m["id"] not in self.starting_missions and m["id"] in pool
                        and any(s in self.starting_ships for s in self.mission_ships(m))]
+            early = self.multiworld.local_early_items[self.player]
             if flyable:
-                self.multiworld.local_early_items[self.player][MISSION_PASSES[self.random.choice(flyable)]] = 1
+                early[MISSION_PASSES[self.random.choice(flyable)]] = 1
+            else:
+                # The starting ship flies nothing else (the T-16 on Beggar's Canyon): place a pass and its ship early.
+                others = [m for m in data.MISSIONS if m["id"] not in self.starting_missions and m["id"] in pool]
+                other = self.random.choice(others)
+                early[MISSION_PASSES[other["id"]]] = 1
+                early[self.random.choice(self.mission_ships(other))] = 1
 
         for level in self.starting_missions:
             self.multiworld.push_precollected(self.create_item(MISSION_PASSES[level]))
@@ -160,6 +165,7 @@ class RS64World(World):
             "upgrade_pickups": int(self.options.upgrade_pickups),
             "objective_checks": int(self.options.objective_checks),
             "death_link": int(self.options.death_link),
+            "death_link_trigger": int(self.options.death_link_trigger),
         }
 
     # ---- items ------------------------------------------------------------------------------------------------

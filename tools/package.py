@@ -47,9 +47,25 @@ def package_client(build: Path, platform_name: str | None) -> Path:
     return out
 
 
+def package_probe(build: Path, platform_name: str | None) -> Path:
+    folder = build / "rs64ap-probe"
+    if not (folder / "mod.json").exists():
+        raise SystemExit(f"no probe mod folder at {folder}")
+    name = platform_name or {"Windows": "windows", "Linux": "linux", "Darwin": "macos"}.get(
+        platform.system(), platform.system().lower())
+    out = DIST / f"rs64ap-probe-{name}.zip"
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for f in sorted(folder.iterdir()):
+            if f.is_file() and f.suffix not in (".lib", ".exp", ".pdb", ".ilk"):
+                z.write(f, Path("rs64ap-probe") / f.name)
+        z.write(ROOT / "tools" / "probe.py", "probe.py")
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--client", type=Path, help="client build directory to zip")
+    ap.add_argument("--probe", type=Path, help="probe mod build directory to zip (with tools/probe.py)")
     ap.add_argument("--platform", help="platform name in the zip's file name (default: this machine's)")
     args = ap.parse_args()
 
@@ -61,6 +77,8 @@ def main() -> int:
     print(DIST / "RS64AP.yaml")
     if args.client:
         print(package_client(args.client, args.platform))
+    if args.probe:
+        print(package_probe(args.probe, args.platform))
     return 0
 
 
