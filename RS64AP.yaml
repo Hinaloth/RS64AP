@@ -19,6 +19,6 @@ Star Wars Rogue Squadron:
                                   # (all three tiers are always checks; higher tiers hold filler)
   upgrades_for_gold: 4            # 0-8 upgrades the logic expects before a Gold Medal check
   upgrade_pickups: true           # each mission's hidden upgrade pickup is a check
-  objective_checks: false         # not available yet
+  objective_checks: false         # work in progress: must stay false for now
 
   death_link: false

@@ -8,6 +8,7 @@ An [Archipelago](https://archipelago.gg) multiworld randomizer for *Star Wars: R
   Replenishing Secondaries, a Medal Leniency per mission, and filler (Extra Life, Secondary Refill, Hull Repair,
   Temporary Invincibility).
 - **Checks:** mission completions, bronze / silver / gold medals on every mission, and the hidden upgrade pickups.
+  Objective checks are **work in progress** (see below).
 - **Goal:** finish The Battle of Calamari, or finish a set number of missions.
 
 **Download:** the [latest release](https://github.com/Hinaloth/RS64AP/releases/latest) has `rs64.apworld`, the
@@ -28,7 +29,7 @@ A full seed has been played from start to goal on Windows against archipelago.gg
 
 | Not yet | |
 | --- | --- |
-| Objective checks | Needs each mission's objective count; the option stops generation if turned on |
+| Objective checks (**WIP**) | The `objective_checks` option exists but isn't usable yet: it needs each mission's objective count and how objectives map to the game's flags. Generation stops with an error if it's turned on, so leave it `false` |
 | The Battle of Hoth's ships | Assumed Snowspeeder only |
 | DeathLink | Built and tested without the game only |
 | Linux client | Built on Ubuntu 24.04 and tested without the game; not yet run with the Linux recomp |
