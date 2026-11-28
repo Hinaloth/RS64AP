@@ -5,7 +5,8 @@ Usage:
     python tools/gen_data.py          write both files
     python tools/gen_data.py --check  exit 1 if a generated file is stale (for CI)
 
-It also copies SETUP.md to apworld/rs64/docs/setup_en.md.
+It also copies SETUP.md to apworld/rs64/docs/setup_en.md, and the README's gameplay sections to the apworld's
+game page.
 """
 from __future__ import annotations
 
@@ -180,12 +181,22 @@ def h_source(d: dict) -> str:
     return "\n".join(lines)
 
 
+def game_page() -> str:
+    """The apworld's game page (shown by Archipelago): the README's gameplay sections, Goal to DeathLink."""
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    start, end = readme.index("## Goal"), readme.index("## Known limitations")
+    body = readme[start:end].rstrip() + "\n"
+    return ("# Star Wars: Rogue Squadron\n\n"
+            "Setup: [setup guide](https://github.com/Hinaloth/RS64AP/blob/main/SETUP.md).\n\n" + body)
+
+
 def main() -> int:
     d = json.loads(SRC.read_text(encoding="utf-8"))
     check(d)
     outputs = {PY_OUT: py_source(d), H_OUT: h_source(d)}
     # The apworld's setup guide (shown by Archipelago) is a copy of the repo's SETUP.md.
     outputs[ROOT / "apworld" / "rs64" / "docs" / "setup_en.md"] = (ROOT / "SETUP.md").read_text(encoding="utf-8")
+    outputs[ROOT / "apworld" / "rs64" / "docs" / "en_Star Wars Rogue Squadron.md"] = game_page()
     if "--check" in sys.argv:
         stale = [p for p, text in outputs.items() if not p.exists() or p.read_text(encoding="utf-8") != text]
         for p in stale:

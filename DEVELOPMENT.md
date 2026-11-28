@@ -23,8 +23,9 @@ docs/BIBLE.md        design, game facts, decision log
 RS64AP.yaml          player options template
 ```
 
-After editing `data/rs64ap.json` or `SETUP.md`, run `python tools/gen_data.py`: it regenerates the data files and
-copies `SETUP.md` to `apworld/rs64/docs/setup_en.md`. CI fails when any of them is stale.
+After editing `data/rs64ap.json`, `SETUP.md` or `README.md`, run `python tools/gen_data.py`: it regenerates the data
+files, copies `SETUP.md` to `apworld/rs64/docs/setup_en.md` and the README's gameplay sections to the apworld's game
+page. CI fails when any of them is stale.
 
 ## Building
 
