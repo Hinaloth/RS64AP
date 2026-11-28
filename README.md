@@ -83,7 +83,7 @@ Canyon (T-16).
 
 ## DeathLink
 
-- `death_link` (off by default) sends a DeathLink when you're shot down in a mission. Aborting a mission doesn't
+- `death_link` sends a DeathLink when you're shot down in a mission. Aborting a mission doesn't
   send one.
 - `death_link_trigger` gives you control of when you send a DeathLink: `every_life` (default) sends one with your
   every death; `game_over` sends only the death on your last life.
