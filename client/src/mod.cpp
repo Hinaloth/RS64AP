@@ -561,7 +561,9 @@ int on_mission_frame(uint32_t, uint8_t* rdram, void* ctx, void*) {
     if (done != S.objectives_seen) {
         const uint8_t fresh = done & ~S.objectives_seen;
         if (owned && S.objective_checks) {
-            for (int b = 0; b < 8 && b < d::kMaxObjectives; ++b)
+            // Objective n is bit n-1; bits at or past the mission's count aren't objectives.
+            const int count = std::min<int>(rb(rdram, a::kObjectiveCount), d::kMaxObjectives);
+            for (int b = 0; b < 8 && b < count; ++b)
                 if (fresh & (1u << b)) queue_location(d::location_id(S.level, d::kSlotObjective0 + b));
         }
         S.objectives_seen = done;

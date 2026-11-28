@@ -35,6 +35,8 @@ constexpr int kExtraReplenishingSecondaries = 1;
 // 0 campaign, 1 final (campaign), 2 bonus.
 constexpr int kMissionKind[kMissionCount] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2};
 constexpr bool kMissionPickup[kMissionCount] = {false, false, true, true, false, true, false, true, false, true, true, true, true, true, true, false, false, false, false};
+// Objectives per mission (objective n = flag bit n-1); 0 = unknown.
+constexpr int kObjectiveCount[kMissionCount] = {4, 1, 2, 4, 3, 3, 3, 3, 2, 2, 2, 4, 2, 2, 4, 2, 1, 2, 3};
 // Hangar mask bits (1 << craft) per mission: the default ship, and the ships vanilla adds after a completion.
 constexpr uint32_t kDefaultShip[kMissionCount] = {0x1, 0x1, 0x4, 0x10, 0x1, 0x1, 0x10, 0x2, 0x1, 0x1, 0x4, 0x10, 0x1, 0x2, 0x1, 0x8, 0x80, 0x1, 0x10};
 constexpr uint32_t kReplayShips[kMissionCount] = {0x16c, 0x16c, 0x169, 0x0, 0x16c, 0x16c, 0x0, 0x160, 0x0, 0x16c, 0x161, 0x0, 0x16c, 0x160, 0x16c, 0x165, 0x0, 0x0, 0x0};

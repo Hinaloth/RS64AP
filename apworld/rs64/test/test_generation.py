@@ -141,3 +141,16 @@ class TestNewItems(RS64TestBase):
 
     def test_invincibility_is_filler(self) -> None:
         self.assertEqual(self.world.create_item("Temporary Invincibility").classification, ItemClassification.filler)
+
+
+class TestObjectives(RS64TestBase):
+    options = {"objective_checks": True}
+
+    def test_objective_locations(self) -> None:
+        pickups = sum(1 for m in data.MISSIONS if m["pickup"])
+        objectives = sum(m["objectives"] for m in data.MISSIONS)
+        self.assertEqual(objectives, 49)
+        self.assertEqual(_location_count(self.world), 19 * 4 + pickups + objectives)
+        self.assertTrue(self.multiworld.get_location("Ambush at Mos Eisley - Objective 4", self.player))
+        with self.assertRaises(KeyError):
+            self.multiworld.get_location("Rendezvous on Barkhesh - Objective 2", self.player)

@@ -286,6 +286,14 @@ int main(int argc, char** argv) {
     }
     ww(RAM, a::kMedalInfoPtr, table);
 
+    // Objectives (the e2e seed has objective_checks on): objective 1 done, plus a stray bit past the count.
+    {
+        const int count = d::kObjectiveCount[level];
+        wb(RAM, a::kObjectiveCount, (uint8_t)count);
+        wb(RAM, a::kObjectivesDone, (uint8_t)(0x01u | (1u << count)));
+        frames(3, RS64_HOOK_MISSION_FRAME_NPCS);
+    }
+
     // A scripted end: the result byte says success, no success request.
     wb(RAM, a::kMissionResult, 1);
     fire(RS64_HOOK_MISSION_END);
@@ -315,6 +323,9 @@ int main(int argc, char** argv) {
     expect(has(d::location_id(level, d::kSlotBronze)), "bronze check recorded");
     expect(has(d::location_id(level, d::kSlotSilver)), "silver check recorded");
     expect(has(d::location_id(level, d::kSlotGold)), "gold check recorded");
+    expect(has(d::location_id(level, d::kSlotObjective0)), "objective 1 check recorded");
+    expect(!has(d::location_id(level, d::kSlotObjective0 + d::kObjectiveCount[level])),
+           "bit past the objective count ignored");
     expect(!d::kMissionPickup[level] || has(d::location_id(level, d::kSlotPickup)), "pickup check recorded");
     expect(pilot.find("\"unsent\": []") != std::string::npos, "nothing left unsent");
     std::fprintf(stderr, "last message: %s\n", text("ap_last").c_str());

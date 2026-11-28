@@ -23,7 +23,8 @@ Either complete The Battle of Calamari, or complete a set number of missions (ca
   Checks sets the best tier that can hold useful items; the tiers above it only hold filler.
 - The hidden upgrade pickup in missions that have one (optional, on by default). Picking it up sends the check; the
   upgrade itself comes from the item pool.
-- Each mission objective (optional, not available yet).
+- Each mission objective (optional, 49 in all). An objective counts as soon as it's done, even if the mission is
+  then failed or aborted.
 
 ## What items are there?
 

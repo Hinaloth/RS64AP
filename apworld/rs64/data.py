@@ -4,7 +4,7 @@ from typing import Any
 GAME: str = 'Star Wars Rogue Squadron'
 WORLD_VERSION: str = '0.1.0'
 ID_BASE: int = 640000
-VERIFIED: dict[str, bool] = {'allowed_ships': True, 'pickups': False, 'objectives': False, 'objective_counts': True}
+VERIFIED: dict[str, bool] = {'allowed_ships': True, 'pickups': False, 'objectives': True, 'objective_counts': True}
 MAX_OBJECTIVES: int = 10
 
 MISSIONS: list[dict[str, Any]] = [

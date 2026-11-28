@@ -89,8 +89,15 @@ class RS64World(World):
             flyable = [m["id"] for m in data.MISSIONS
                        if m["id"] not in self.starting_missions and m["id"] in pool
                        and any(s in self.starting_ships for s in self.mission_ships(m))]
+            early = self.multiworld.local_early_items[self.player]
             if flyable:
-                self.multiworld.local_early_items[self.player][MISSION_PASSES[self.random.choice(flyable)]] = 1
+                early[MISSION_PASSES[self.random.choice(flyable)]] = 1
+            else:
+                # The starting ship flies nothing else (the T-16 on Beggar's Canyon): place a pass and its ship early.
+                others = [m for m in data.MISSIONS if m["id"] not in self.starting_missions and m["id"] in pool]
+                other = self.random.choice(others)
+                early[MISSION_PASSES[other["id"]]] = 1
+                early[self.random.choice(self.mission_ships(other))] = 1
 
         for level in self.starting_missions:
             self.multiworld.push_precollected(self.create_item(MISSION_PASSES[level]))

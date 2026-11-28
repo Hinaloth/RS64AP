@@ -73,8 +73,8 @@ class UpgradePickups(DefaultOnToggle):
 
 
 class ObjectiveChecks(Toggle):
-    """Each mission objective is a check. Adds many checks, most of them filler.
-    Not available yet: needs the per-mission objective counts (spike S6)."""
+    """Each mission objective is a check (49 in all), sent as soon as the objective is done, even if the mission
+    is then failed or aborted. Adds many checks, most of them filler."""
     display_name = "Objective Checks"
 
 

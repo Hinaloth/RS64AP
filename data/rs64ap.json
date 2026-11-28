@@ -7,10 +7,10 @@
     "//": "false = data still being confirmed (docs/BIBLE.md section 11). The rs64ap-probe mod and tools/probe.py collect it.",
     "allowed_ships": true,
     "pickups": false,
-    "objectives": false,
+    "objectives": true,
     "//ships": "default_ship and replay_ships from play (2026-11-27); the probe's craft masks (2026-11-28) match every default ship and confirm Hoth is Snowspeeder only. Replay ships launch on a first visit with the client's all-craft unlock (play, 2026-11-28).",
     "objective_counts": true,
-    "//objectives": "objective_counts from the probe (2026-11-28). objectives (the flag bit of each objective) still unconfirmed: several missions start with hidden-flag bits at or beyond their count (Nonnah: 2 objectives, hidden 0x04)."
+    "//objectives": "Counts from the probe (2026-11-28). Objective n is flag bit n-1 (play logs of Mos Eisley, Barkhesh, Nonnah, 2026-11-28): bits below the count are the objectives; hidden bits only mean 'not shown yet', and a hidden bit at or past the count (Nonnah 0x04) clears without an objective."
   },
   "missions": [
     {

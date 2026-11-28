@@ -7,8 +7,8 @@ An [Archipelago](https://archipelago.gg) multiworld randomizer for *Star Wars: R
 - **Items:** 19 Mission Passes (campaign and bonus missions), 9 ships (Naboo N-1 and T-16 included), 8 upgrades,
   Replenishing Secondaries, a Medal Leniency per mission, and filler (Extra Life, Secondary Refill, Hull Repair,
   Temporary Invincibility).
-- **Checks:** mission completions, bronze / silver / gold medals on every mission, and the hidden upgrade pickups.
-  Objective checks are **work in progress** (see below).
+- **Checks:** mission completions, bronze / silver / gold medals on every mission, the hidden upgrade pickups, and
+  optionally every mission objective (49).
 - **Goal:** finish The Battle of Calamari, or finish a set number of missions.
 
 **Download:** the [latest release](https://github.com/Hinaloth/RS64AP/releases/latest) has `rs64.apworld`, the
@@ -25,11 +25,11 @@ A full seed has been played from start to goal on Windows against archipelago.gg
 | Mission Passes and mission select | Missions without a pass are listed but can't be confirmed |
 | Ships and the hangar | The hangar offers only owned ships the seed's logic counts for that mission (N-1 included) |
 | Completions, medals, upgrade pickups | Medal checks go out a few seconds after the debrief; a medal also sends every tier below it |
+| Objective checks (option, off by default) | Objective counts and order confirmed with the probe; tested in play only through the probe so far |
 | Upgrades, Replenishing Secondaries, filler, Medal Leniency | Filler waits for an active mission |
 
 | Not yet | |
 | --- | --- |
-| Objective checks (**WIP**) | The `objective_checks` option exists but isn't usable yet: it needs each mission's objective count and how objectives map to the game's flags (being collected with the probe, see below). Generation stops with an error if it's turned on, so leave it `false` |
 | DeathLink | Built and tested without the game only |
 | Linux client | Built on Ubuntu 24.04 and tested without the game; not yet run with the Linux recomp |
 
@@ -53,8 +53,9 @@ The player guide is [apworld/rs64/docs/setup_en.md](apworld/rs64/docs/setup_en.m
 
 ## Collecting game data (probe)
 
-Some game facts the randomizer needs (objective counts per mission, how objectives map to the game's flags) come from
-the **rs64ap-probe** mod and `probe.py`, kept separate from the AP client. The probe only writes a log
+Game facts the randomizer relies on (objective counts per mission, how objectives map to the game's flags, ship
+masks) were collected with the **rs64ap-probe** mod and `probe.py`, kept separate from the AP client. They stay
+available for checking or extending the data. The probe only writes a log
 (`mod_data/rs64ap-probe/probe.log` in the game folder) and changes nothing in the game.
 
 1. Unzip `rs64ap-probe-<os>.zip` into the game's `mods/` folder (it holds the `rs64ap-probe` mod folder and `probe.py`).

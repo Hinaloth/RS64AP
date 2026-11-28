@@ -157,6 +157,8 @@ def h_source(d: dict) -> str:
         "// 0 campaign, 1 final (campaign), 2 bonus.",
         "constexpr int kMissionKind[kMissionCount] = {" + ", ".join(str(kind[m["kind"]]) for m in ms) + "};",
         "constexpr bool kMissionPickup[kMissionCount] = {" + ", ".join("true" if m["pickup"] else "false" for m in ms) + "};",
+        "// Objectives per mission (objective n = flag bit n-1); 0 = unknown.",
+        "constexpr int kObjectiveCount[kMissionCount] = {" + ", ".join(str(m["objectives"] or 0) for m in ms) + "};",
         "// Hangar mask bits (1 << craft) per mission: the default ship, and the ships vanilla adds after a completion.",
         "constexpr uint32_t kDefaultShip[kMissionCount] = {"
         + ", ".join(hex(1 << craft_of[m["default_ship"]]) for m in ms) + "};",
