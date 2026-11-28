@@ -3,7 +3,7 @@
 ## What you need
 
 - **A Windows or Linux PC** that can run
-  [RogueSquadron64Recomp](https://github.com/MikeSemicolonD/RogueSquadron64Recomp). The Linux client builds and
+  [RogueSquadron64Recomp](https://github.com/MikeSemicolonD/RogueSquadron64Recomp) v1.0.0 or newer. The Linux client builds and
   passes its tests but hasn't been played with yet, so expect rough edges there.
 - **Your own copy of the game:** a dump of *Star Wars: Rogue Squadron* (USA v1.0) as `.z64`, `.v64` or `.n64`. It
   isn't provided here or by the recomp. Dump it from a cartridge you own.
@@ -13,20 +13,15 @@
 
 ## 1. Get the game running
 
-The recomp has no downloadable builds, so you build it once from its repository. Its
-[README](https://github.com/MikeSemicolonD/RogueSquadron64Recomp#building) lists the tools you need. Its setup script
-asks for your ROM, checks for missing tools and makes the build:
+Download RogueSquadron64Recomp **v1.0.0 or newer** for your system from its
+[releases page](https://github.com/MikeSemicolonD/RogueSquadron64Recomp/releases) and unzip it wherever you like.
 
-```sh
-git clone --recurse-submodules https://github.com/MikeSemicolonD/RogueSquadron64Recomp.git
-cd RogueSquadron64Recomp
-powershell -ExecutionPolicy Bypass -File tools\setup\setup.ps1   # Windows
-bash tools/setup/setup.sh                                          # Linux
-```
+Put your ROM in the game's folder (next to the executable) under the name `rogue_squadron.z64`,
+`rogue_squadron.v64` or `rogue_squadron.n64`, and launch. The game checks and imports it on the first launch. Play a
+minute before adding the mod, to make sure the game itself works.
 
-To launch, put your ROM in the game's folder (next to the executable) under the name `rogue_squadron.z64`,
-`rogue_squadron.v64` or `rogue_squadron.n64`. The game checks and imports it on the first launch. Play a minute
-before adding the mod, to make sure the game itself works.
+You can also build the recomp from source instead; its
+[README](https://github.com/MikeSemicolonD/RogueSquadron64Recomp#building) explains how.
 
 ## 2. Install the client mod
 
