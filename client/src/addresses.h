@@ -29,9 +29,11 @@ constexpr uint32_t kBestMedals = 0x80130B1Cu;     // u8[level]: live best medal 
 constexpr uint32_t kSaveNabooKey = 0x8013A5C0u + 0xACu;
 constexpr uint32_t kAccounts = 0x8013A5D4u;       // account_data[3], stride 0x14
 constexpr uint32_t kAccountStride = 0x14u;
+constexpr uint32_t kAcctName = 0x00u;             // char[4], null-terminated initials
 constexpr uint32_t kAcctCurrentLevel = 0x05u;     // u8
 constexpr uint32_t kAcctMedals = 0x06u;           // 2 bits per level: byte 0x06 + (level >> 2), shift (level & 3) * 2
 constexpr uint32_t kAcctUnlockWord = 0x0Cu;       // u32, upgrades + level/craft unlocks
+constexpr uint32_t kAcctPilotId = 0x10u;          // u8, the pilot's ID (1-254) given when it is created
 
 // Masks
 constexpr uint32_t kUpgradeMask = 0x0001FE00u;

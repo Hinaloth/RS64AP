@@ -15,6 +15,8 @@ bool PilotFile::load(const std::string& path) {
         seed = j.value("seed", std::string());
         slot_name = j.value("slot_name", std::string());
         server = j.value("server", std::string());
+        pilot_id = j.value("pilot_id", -1);
+        pilot_name = j.value("pilot_name", std::string());
         items = j.value("items", std::vector<int64_t>());
         const auto s = j.value("sent", std::vector<int64_t>());
         sent = std::set<int64_t>(s.begin(), s.end());
@@ -34,6 +36,8 @@ bool PilotFile::save(const std::string& path) const {
         {"seed", seed},
         {"slot_name", slot_name},
         {"server", server},
+        {"pilot_id", pilot_id},
+        {"pilot_name", pilot_name},
         {"items", items},
         {"sent", std::vector<int64_t>(sent.begin(), sent.end())},
         {"unsent", std::vector<int64_t>(unsent.begin(), unsent.end())},

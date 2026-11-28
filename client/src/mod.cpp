@@ -98,6 +98,7 @@ struct Session {
 
     // From the server
     bool connected = false;
+    bool goal_reported = false;    // goal sent on this connection
     std::set<int64_t> slot_locations;
     int goal = 0;
     int missions_required = 19;
@@ -197,6 +198,18 @@ std::string pilot_path(int slot) {
 // Medal sources as last seen, to log every change (where and when the game writes a medal is still unconfirmed).
 int g_seen_saved[d::kMissionCount] = {}, g_seen_live[d::kMissionCount] = {};
 
+// The pilot in a save slot, as the game identifies it: its ID and initials.
+int pilot_id(const uint8_t* rdram, int slot) { return rb(rdram, a::account(slot) + a::kAcctPilotId); }
+std::string pilot_name(const uint8_t* rdram, int slot) {
+    std::string n;
+    for (uint32_t i = 0; i < 4; ++i) {
+        const char c = (char)rb(rdram, a::account(slot) + a::kAcctName + i);
+        if (!c) break;
+        n += c;
+    }
+    return n;
+}
+
 // The pilot on the account screen changed: load its file, if it has one. A connection made for another pilot ends.
 void on_pilot(int slot) {
     save_file();
@@ -227,7 +240,7 @@ void queue_location(int64_t id) {
 }
 
 void check_goal() {
-    if (!S.connected || S.file.goal_sent) return;
+    if (!S.connected || S.goal_reported) return;
     bool done = false;
     if (S.goal == 1) {
         int n = 0;
@@ -237,10 +250,11 @@ void check_goal() {
         done = S.file.sent.count(d::location_id(15, d::kSlotComplete)) != 0;
     }
     if (done) {
-        g_net.send_goal();
+        g_net.send_goal();  // every connection: a re-hosted room needs it too
+        S.goal_reported = true;
+        if (!S.file.goal_sent) message("Goal complete!");
         S.file.goal_sent = true;
         S.dirty = true;
-        message("Goal complete!");
     }
 }
 
@@ -297,7 +311,7 @@ void scan_medals(const uint8_t* rdram, int level) {
 
 // ---- network events --------------------------------------------------------------------------------------------
 
-void bind_or_verify(const ConnectedInfo& info) {
+void bind_or_verify(const uint8_t* rdram, const ConnectedInfo& info) {
     const int slot = S.pending_bind_slot >= 0 ? S.pending_bind_slot : S.pilot_slot;
     S.pending_bind_slot = -1;
     if (slot < 0) {
@@ -321,12 +335,16 @@ void bind_or_verify(const ConnectedInfo& info) {
         S.bound = true;
         logf("pilot %d bound to seed %s", slot + 1, info.seed.c_str());
     }
+    if (S.file.pilot_id < 0) {
+        S.file.pilot_id = pilot_id(rdram, slot);
+        S.file.pilot_name = pilot_name(rdram, slot);
+    }
     S.file.slot_name = config("slot").empty() ? S.file.slot_name : config("slot");
     S.file.server = config("server").empty() ? S.file.server : config("server");
     S.dirty = true;
 }
 
-void on_connected(ConnectedInfo info) {
+void on_connected(const uint8_t* rdram, ConnectedInfo info) {
     const auto& sd = info.slot_data;
     const std::string wv = sd.value("world_version", std::string("0.0.0"));
     if (wv.substr(0, wv.find('.')) != std::string(d::kWorldVersion).substr(0, std::string(d::kWorldVersion).find('.'))) {
@@ -335,13 +353,21 @@ void on_connected(ConnectedInfo info) {
         return;
     }
     S.error.clear();
-    bind_or_verify(info);
+    bind_or_verify(rdram, info);
     if (!S.error.empty()) return;
 
     S.connected = true;
     S.slot_locations = info.checked;
     S.slot_locations.insert(info.missing.begin(), info.missing.end());
-    S.file.sent.insert(info.checked.begin(), info.checked.end());
+    // The server is the truth for what is checked. Checks this pilot made that the room doesn't have (a re-hosted
+    // seed, or sends lost in a crash) go out again.
+    int resend = 0;
+    for (int64_t id : S.file.sent) {
+        if (!info.checked.count(id) && S.slot_locations.count(id) && S.file.unsent.insert(id).second) ++resend;
+    }
+    if (resend) logf("re-sending %d check(s) this room doesn't have", resend);
+    S.file.sent = info.checked;
+    S.goal_reported = false;
     S.goal = sd.value("goal", 0);
     S.missions_required = sd.value("missions_required", 19);
     S.medal_checks = sd.value("medal_checks", 3);
@@ -355,7 +381,12 @@ void on_connected(ConnectedInfo info) {
 
 void on_items(const std::vector<ReceivedItem>& items) {
     for (const auto& it : items) {
-        if (it.index >= 0 && (size_t)it.index < S.file.items.size()) continue;  // already applied (reconnect resync)
+        if (it.index >= 0 && (size_t)it.index < S.file.items.size()) {
+            if (S.file.items[(size_t)it.index] == it.item) continue;  // already applied (reconnect resync)
+            // A different item at this index: another room for the same seed. Its list wins from here on.
+            logf("item %d differs from this pilot's file: resyncing from there", it.index);
+            S.file.items.resize((size_t)it.index);
+        }
         S.file.items.push_back(it.item);
         if (filler_of(it.item)) S.file.filler_queue.push_back(it.item);
         message("Received " + item_name(it.item) + " from " + it.sender);
@@ -365,11 +396,28 @@ void on_items(const std::vector<ReceivedItem>& items) {
     save_file();
 }
 
-void pump() {
+// A bound pilot deleted and recreated in the same slot is a new pilot: its file is set aside, the binding dropped.
+void check_pilot_identity(const uint8_t* rdram) {
+    if (!S.bound || S.pilot_slot < 0 || S.file.pilot_id < 0) return;
+    const int id = pilot_id(rdram, S.pilot_slot);
+    const std::string name = pilot_name(rdram, S.pilot_slot);
+    if (id == S.file.pilot_id && name == S.file.pilot_name) return;
+    logf("pilot %d is now %s (id %d), not %s (id %d): unbinding", S.pilot_slot + 1, name.c_str(), id,
+         S.file.pilot_name.c_str(), S.file.pilot_id);
+    g_net.disconnect();
+    S.connected = false;
+    const std::string backup = S.file_path + "." + S.file.seed + ".bak";
+    std::remove(backup.c_str());
+    std::rename(S.file_path.c_str(), backup.c_str());
+    on_pilot(S.pilot_slot);
+}
+
+void pump(const uint8_t* rdram) {
     if (const int slot = g_api->save_slot(); slot != S.pilot_slot) on_pilot(slot);
+    check_pilot_identity(rdram);
 
     ConnectedInfo info;
-    if (g_net.take_connected(info)) on_connected(std::move(info));
+    if (g_net.take_connected(info)) on_connected(rdram, std::move(info));
     if (g_net.state() != NetState::SlotConnected) S.connected = false;
 
     if (S.connected || S.bound) {
@@ -458,8 +506,8 @@ const char* lock_reason(int level) {
 void apply_leniency(uint8_t* rdram, int level);
 void restore_medal_table(uint8_t* rdram);
 
-int on_frame(uint32_t, uint8_t*, void*, void*) {
-    pump();
+int on_frame(uint32_t, uint8_t* rdram, void*, void*) {
+    pump(rdram);
     return RS64_HOOK_CONTINUE;
 }
 

@@ -13,6 +13,8 @@ struct PilotFile {
     std::string seed;
     std::string slot_name;
     std::string server;
+    int pilot_id = -1;                 // the game's pilot ID (account +0x10), -1 = not recorded yet
+    std::string pilot_name;            // the pilot's initials (account +0x00)
     std::vector<int64_t> items;        // every item received, in server index order
     std::set<int64_t> sent;            // locations the server has (or was sent)
     std::set<int64_t> unsent;          // detected while offline, sent on the next connect

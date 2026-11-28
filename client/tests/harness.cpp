@@ -329,6 +329,13 @@ int main(int argc, char** argv) {
     const std::string pilot2 = slurp(g_data_dir + "pilot_0.json");
     expect(std::count(pilot2.begin(), pilot2.end(), ',') == (long)items_before, "reconnect did not duplicate items");
 
+    // The pilot is deleted and a new one created in the same slot: a new pilot, so the binding is dropped.
+    wb(RAM, a::account(0) + a::kAcctPilotId, 7);
+    wb(RAM, a::account(0) + a::kAcctName, 'N');
+    frames(5);
+    expect(text("ap_pilot").find("NOT BOUND") != std::string::npos, "recreated pilot is unbound (%s)", text("ap_pilot").c_str());
+    expect(!g_conditions["ap_ready"].first(g_conditions["ap_ready"].second), "recreated pilot no longer ready");
+
     std::fprintf(stderr, "%d failure(s)\n", g_failures);
     g_actions["ap_disconnect"].first(nullptr);
     std::fflush(stderr);
