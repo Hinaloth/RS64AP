@@ -11,9 +11,10 @@ Status markers used throughout:
 - **[PROPOSED]** a default picked to keep moving; change it freely.
 - **[SPIKE Sn]** depends on a fact about the game nobody has checked yet; see [Spikes](#11-spikes).
 
-**Build status (2026-11-27).** M1 (apworld) is done and tested. The client for M2–M8 is written and passes an
-end-to-end test against a real Archipelago server with a fake game (`tools/e2e.py`), but has not run inside the
-recomp. Every spike in section 11 is still open; the client logs `[rs64ap] probe` lines that answer S1, S4, S6 and S7.
+**Build status (2026-11-28, v0.1.0).** The apworld and the client are released as an alpha. A full seed was played
+from start to goal on Windows: passes, ships (N-1 included), completions, medals, pickups and items all work. Still
+open: objective counts (S6), Hoth's ships, the pickups' upgrade bits (S4), DeathLink in play, and the Linux client in
+play. The decision log (section 16) records what play confirmed.
 
 Facts about the game cite the recomp repo's docs and sources by path (snapshot: commit `222947ee`,
 2026-11-26, host API v12). Addresses are KSEG0 (`0x80......`).
