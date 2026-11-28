@@ -121,6 +121,7 @@ struct Session {
     bool pending_complete = false;
     uint8_t objectives_seen = 0;
     uint8_t lives_seen = 0;
+    float hull_seen = 0.0f;        // player 1's hull last frame: a drop to 0 is a death (DeathLink out)
     int filler_cool = 0;
     int message_cool = 0;
     int deathlink_grace = 0;
@@ -521,6 +522,7 @@ int on_mission_ready(uint32_t, uint8_t* rdram, void*, void*) {
     S.in_mission = true;
     S.objectives_seen = rb(rdram, a::kObjectivesDone);
     S.lives_seen = rb(rdram, a::kLives);
+    S.hull_seen = rf(rdram, a::kPlayerHealth);
     S.filler_cool = 90;
     S.deathlink_grace = 0;
     S.regen_next = g_api->mission_seconds() + d::kRegenSeconds;
@@ -569,12 +571,17 @@ int on_mission_frame(uint32_t, uint8_t* rdram, void* ctx, void*) {
         S.objectives_seen = done;
     }
 
-    // Lives: DeathLink out
-    const uint8_t lives = rb(rdram, a::kLives);
-    if (lives < S.lives_seen && S.death_link && S.connected && S.deathlink_grace == 0) {
-        g_net.send_deathlink(S.file.slot_name + " was shot down over " + d::kMissionNames[S.level]);
+    // DeathLink out: player 1's hull reaching 0 is a death. Watching lives misses it (a crash restarts the mission
+    // from its checkpoint, re-running mission start) and counts aborts, which cost a life without a death.
+    const float hull = rf(rdram, a::kPlayerHealth);
+    if (S.hull_seen > 0.0f && hull <= 0.0f) {
+        if (S.death_link && S.connected && S.deathlink_grace == 0) {
+            g_net.send_deathlink(S.file.slot_name + " was shot down over " + d::kMissionNames[S.level]);
+            logf("DeathLink sent (shot down over %s)", d::kMissionNames[S.level]);
+        }
     }
-    S.lives_seen = lives;
+    S.hull_seen = hull;
+    S.lives_seen = rb(rdram, a::kLives);
     if (S.deathlink_grace > 0) --S.deathlink_grace;
 
     if (!calm) return RS64_HOOK_CONTINUE;

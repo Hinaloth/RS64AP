@@ -15,6 +15,9 @@
 //   upgrade_gained   level bits                                   (upgrade bits that appeared during the mission)
 //   craft_masks      consider=... ignore=...                      (per level, once per SELECT LEVEL visit)
 //   hangar           level allowed                                (craft-select allowed mask, once per visit)
+//   mission_init     level lives                                  (also fires when a crash restarts the mission)
+//   hull_zero        level lives t                                (player 1's hull reached 0)
+//   lives            level lives was t                            (lives changed during the mission)
 
 #include <cstdarg>
 #include <cstdint>
@@ -55,6 +58,8 @@ int g_seen_saved[kLevels], g_seen_live[kLevels];
 bool g_seen_init = false;
 int g_hangar_logged = -1;
 int g_frame = 0;
+float g_hull = 0.0f;
+uint8_t g_lives = 0;
 
 #if defined(__GNUC__)
 void probe(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
@@ -112,6 +117,7 @@ int on_debrief(uint32_t, uint8_t* rdram, void*, void*) {
 int on_mission_init(uint32_t, uint8_t* rdram, void*, void*) {
     g_level = rb(rdram, a::kCurrentLevel);
     g_in_mission = false;
+    probe("mission_init level=%d lives=%u", g_level, rb(rdram, a::kLives));
     return RS64_HOOK_CONTINUE;
 }
 
@@ -121,6 +127,8 @@ int on_mission_ready(uint32_t, uint8_t* rdram, void*, void*) {
     g_done = rb(rdram, a::kObjectivesDone);
     g_hidden = rb(rdram, a::kObjectivesHidden);
     g_upgrades_at_start = rw(rdram, a::kSettingsWord) & a::kUpgradeMask;
+    g_hull = rf(rdram, a::kPlayerHealth);
+    g_lives = rb(rdram, a::kLives);
     probe("mission_ready level=%d objectives=%u done=0x%02X hidden=0x%02X lives=%u", g_level, g_count, g_done,
           g_hidden, rb(rdram, a::kLives));
     return RS64_HOOK_CONTINUE;
@@ -138,6 +146,15 @@ int on_mission_frame(uint32_t, uint8_t* rdram, void*, void*) {
         g_done = done;
         g_hidden = hidden;
         g_count = count;
+    }
+    const float hull = rf(rdram, a::kPlayerHealth);
+    if (g_hull > 0.0f && hull <= 0.0f)
+        probe("hull_zero level=%d lives=%u t=%.1f", g_level, rb(rdram, a::kLives), g_api->mission_seconds());
+    g_hull = hull;
+    const uint8_t lives = rb(rdram, a::kLives);
+    if (lives != g_lives) {
+        probe("lives level=%d lives=%u was=%u t=%.1f", g_level, lives, g_lives, g_api->mission_seconds());
+        g_lives = lives;
     }
     const uint32_t upgrades = rw(rdram, a::kSettingsWord) & a::kUpgradeMask;
     if (upgrades & ~g_upgrades_at_start) {

@@ -50,7 +50,11 @@ int g_failures = 0;
 uint32_t g_craft_mask = 0x7Fu;
 std::vector<uint32_t> g_damage_calls;
 
-void hlog(const char* line) { std::fprintf(stderr, "%s\n", line); }
+int g_log_deathlink_sent = 0;
+void hlog(const char* line) {
+    if (std::strstr(line, "DeathLink sent")) ++g_log_deathlink_sent;
+    std::fprintf(stderr, "%s\n", line);
+}
 int add_hook(uint32_t hook, rs64_hook_fn fn, void* user) { g_hooks[hook].push_back({fn, user}); return 0; }
 int add_text(const char* n, rs64_text_fn fn, void* u) { g_texts[n] = {fn, u}; return 0; }
 int add_input(rs64_input_fn, void*) { return 0; }
@@ -285,6 +289,19 @@ int main(int argc, char** argv) {
         }
     }
     ww(RAM, a::kMedalInfoPtr, table);
+
+    // DeathLink out (the e2e seed has death_link on): the hull reaching 0 sends; an abort-style life loss doesn't.
+    wf(RAM, a::kPlayerHealth, 100.0f);
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    g_log_deathlink_sent = 0;
+    wb(RAM, a::kLives, 2);
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    expect(g_log_deathlink_sent == 0, "a life lost without the hull at 0 sends no DeathLink");
+    wf(RAM, a::kPlayerHealth, 0.0f);
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
+    expect(g_log_deathlink_sent == 1, "hull at 0 sends a DeathLink (%d sent)", g_log_deathlink_sent);
+    wf(RAM, a::kPlayerHealth, 100.0f);
+    frames(2, RS64_HOOK_MISSION_FRAME_NPCS);
 
     // Objectives (the e2e seed has objective_checks on): objective 1 done, plus a stray bit past the count.
     {
