@@ -117,7 +117,7 @@ void Net::run(ConnectConfig cfg, int gen) {
     });
     ap->set_room_info_handler([ap, &cfg, this, gen] {
         set_status(gen, "LOGGING IN");
-        ap->ConnectSlot(cfg.slot, cfg.password, kItemsHandling);
+        ap->ConnectSlot(cfg.slot, cfg.password, kItemsHandling, {}, {0, 6, 8});
     });
     ap->set_slot_refused_handler([this, gen](const std::list<std::string>& errors) {
         set_state(gen, NetState::Refused);

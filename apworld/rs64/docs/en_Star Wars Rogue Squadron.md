@@ -19,7 +19,8 @@ Either complete The Battle of Calamari, or complete a set number of missions (ca
 ## What are the checks?
 
 - Completing each mission.
-- Medals on each mission: bronze, and optionally silver and gold. Medals count up, so a gold sends every enabled tier.
+- Medals on each mission: bronze, silver and gold are always checks, and a medal sends every tier below it. Medal
+  Checks sets the best tier that can hold useful items; the tiers above it only hold filler.
 - The hidden upgrade pickup in missions that have one (optional, on by default). Picking it up sends the check; the
   upgrade itself comes from the item pool.
 - Each mission objective (optional, not available yet).

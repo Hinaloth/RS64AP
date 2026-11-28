@@ -25,7 +25,9 @@ release zip.
    password, if there is one.
 2. On the main menu, choose **ARCHIPELAGO**, then **create a new pilot**. A pilot is bound to one seed the first time it
    connects; use a fresh pilot for every seed, because the client rewrites the pilot's unlocks.
-3. Choose **CONNECT** on the ARCHIPELAGO page. Once it says CONNECTED the game continues to mission select.
+3. Choose **CONNECT** on the ARCHIPELAGO page. Once it says CONNECTED the game continues to mission select. The
+   page reconnects by itself only for a pilot going back to the server it last played on; for a new server it waits
+   for CONNECT, so **FORGET PILOT SEED** is there if you want to unbind the pilot first.
 
 A brand-new pilot is sent straight into Ambush at Mos Eisley by the game. Abort it from the pause menu if you don't
 hold that mission's pass: missions you don't hold a pass for send no checks.

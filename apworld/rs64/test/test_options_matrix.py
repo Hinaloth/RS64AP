@@ -3,7 +3,7 @@ import itertools
 import unittest
 from argparse import Namespace
 
-from BaseClasses import CollectionState, MultiWorld
+from BaseClasses import CollectionState, LocationProgressType, MultiWorld
 from Fill import distribute_items_restrictive
 from worlds.AutoWorld import call_all
 
@@ -49,3 +49,6 @@ class TestMatrix(unittest.TestCase):
                                   starting_missions=starts, starting_mission_pool=pool, ship_logic=ships)
                     self.assertTrue(mw.can_beat_game(CollectionState(mw)))
                     self.assertTrue(mw.has_beaten_game(mw.get_all_state()))
+                    for loc in mw.get_locations(1):
+                        if loc.progress_type == LocationProgressType.EXCLUDED:
+                            self.assertFalse(loc.item.advancement or loc.item.useful, loc.name)

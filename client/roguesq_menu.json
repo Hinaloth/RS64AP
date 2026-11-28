@@ -1,8 +1,8 @@
 {
-  "//": "ARCHIPELAGO goes to the pilot select like START; once a pilot is chosen this page opens, and mission select follows as soon as the client is connected with that pilot bound (exit_when ap_ready). A pilot that is already bound reconnects on its own. Live rows come from the rs64ap native library's text sources.",
+  "//": "ARCHIPELAGO goes to the pilot select like START; once a pilot is chosen this page opens, and mission select follows as soon as the client is connected with that pilot bound (exit_when ap_ready). A bound pilot reconnects and continues on its own only when the settings' server is the one it last played on; otherwise the page waits for CONNECT (FORGET PILOT SEED stays reachable). Live rows come from the rs64ap native library's text sources.",
   "buttons": [
     { "id": "ap_open", "menu": "main_menu", "type": "action", "action": "none", "transition": "account", "page": "archipelago",
-      "exit_when": "ap_ready", "label": "ARCHIPELAGO", "title": "ARCHIPELAGO", "after": "options", "title_y": -20 },
+      "exit_when": "ap_ready", "label": "ARCHIPELAGO", "title": "ARCHIPELAGO", "after": "options", "x": -117, "title_y": -20 },
 
     { "id": "ap_status", "menu": "archipelago", "type": "label", "label": "NOT CONNECTED", "label_src": "ap_status", "y": -18 },
     { "id": "ap_pilot", "menu": "archipelago", "type": "label", "label": " ", "label_src": "ap_pilot", "scale": 0.75, "gap_after": 12 },

@@ -197,7 +197,14 @@ int main(int argc, char** argv) {
 
     // Mission select: the flown mission is owned, mission 0 is locked unless it was a starting mission.
     Regs ms{};
+    ms.r[kA2] = 0;  // a fresh pilot: the game lists only level 0
     fire(RS64_HOOK_MISSION_SELECT_INIT, &ms);
+    expect((uint32_t)ms.r[kA2] >= (uint32_t)level, "mission list raised to reach owned mission %d (a2=%u)", level,
+           (uint32_t)ms.r[kA2]);
+    ww(RAM, a::kMsUnlocked, 0x1u);
+    fire(RS64_HOOK_MISSION_SELECT_TICK, &ms);
+    expect((rw(RAM, a::kMsUnlocked) >> level) & 1u, "cursor can reach mission %d (mask 0x%X)", level, rw(RAM, a::kMsUnlocked));
+    ms.r[kA2] = 0;
     wb(RAM, a::kMsCursor, (uint8_t)level);
     ww(RAM, a::kPressedWords, 0x8000u);
     fire(RS64_HOOK_MISSION_SELECT_TICK, &ms);
@@ -279,7 +286,8 @@ int main(int argc, char** argv) {
     }
     ww(RAM, a::kMedalInfoPtr, table);
 
-    fire(RS64_HOOK_RESULT_SUCCESS);
+    // A scripted end: the result byte says success, no success request.
+    wb(RAM, a::kMissionResult, 1);
     fire(RS64_HOOK_MISSION_END);
     frames(1);
     const uint32_t eased = rw(RAM, a::kMedalInfoPtr);
@@ -297,9 +305,8 @@ int main(int argc, char** argv) {
     fire(RS64_HOOK_MISSION_SELECT_INIT, &back);
     expect(rw(RAM, a::kMedalInfoPtr) == table, "medal table pointer restored at mission select");
 
-    // Debrief writes a silver medal for the level.
-    const uint32_t medal_byte = acct + a::kAcctMedals + (uint32_t)(level >> 2);
-    wb(RAM, medal_byte, (uint8_t)(rb(RAM, medal_byte) | (2u << ((level & 3) * 2))));
+    // The debrief writes a gold medal to the live best-medal array (the saved record is left as it was).
+    wb(RAM, a::kBestMedals + (uint32_t)level, 3);
     frames(100);
 
     const std::string pilot = slurp(g_data_dir + "pilot_0.json");
@@ -307,6 +314,7 @@ int main(int argc, char** argv) {
     expect(has(d::location_id(level, d::kSlotComplete)), "complete check recorded");
     expect(has(d::location_id(level, d::kSlotBronze)), "bronze check recorded");
     expect(has(d::location_id(level, d::kSlotSilver)), "silver check recorded");
+    expect(has(d::location_id(level, d::kSlotGold)), "gold check recorded");
     expect(!d::kMissionPickup[level] || has(d::location_id(level, d::kSlotPickup)), "pickup check recorded");
     expect(pilot.find("\"unsent\": []") != std::string::npos, "nothing left unsent");
     std::fprintf(stderr, "last message: %s\n", text("ap_last").c_str());
@@ -320,6 +328,28 @@ int main(int argc, char** argv) {
     frames(50);
     const std::string pilot2 = slurp(g_data_dir + "pilot_0.json");
     expect(std::count(pilot2.begin(), pilot2.end(), ',') == (long)items_before, "reconnect did not duplicate items");
+
+    // Back on the ARCHIPELAGO page with the same server: reconnects and continues without CONNECT.
+    Regs ms2{};
+    fire(RS64_HOOK_MISSION_SELECT_INIT, &ms2);
+    g_actions["ap_disconnect"].first(nullptr);
+    frames(5);
+    expect(wait_ready(20), "same server: auto-reconnected without CONNECT");
+    // A different server (a new room): the page waits.
+    fire(RS64_HOOK_MISSION_SELECT_INIT, &ms2);
+    g_actions["ap_disconnect"].first(nullptr);
+    const std::string real_server = g_config["server"];
+    g_config["server"] = "ws://127.0.0.1:1";
+    bool moved_on = wait_ready(2);
+    expect(!moved_on, "different server: waits for CONNECT (status %s)", text("ap_status").c_str());
+    g_config["server"] = real_server;
+
+    // The pilot is deleted and a new one created in the same slot: a new pilot, so the binding is dropped.
+    wb(RAM, a::account(0) + a::kAcctPilotId, 7);
+    wb(RAM, a::account(0) + a::kAcctName, 'N');
+    frames(5);
+    expect(text("ap_pilot").find("NOT BOUND") != std::string::npos, "recreated pilot is unbound (%s)", text("ap_pilot").c_str());
+    expect(!g_conditions["ap_ready"].first(g_conditions["ap_ready"].second), "recreated pilot no longer ready");
 
     std::fprintf(stderr, "%d failure(s)\n", g_failures);
     g_actions["ap_disconnect"].first(nullptr);

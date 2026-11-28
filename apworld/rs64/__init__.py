@@ -5,7 +5,7 @@ Design and build notes: docs/BIBLE.md in the RS64AP repository.
 import logging
 from typing import Any, ClassVar
 
-from BaseClasses import ItemClassification, Region, Tutorial
+from BaseClasses import ItemClassification, LocationProgressType, Region, Tutorial
 from Options import OptionError
 from rule_builder.rules import Has, HasAny, HasFromList, True_
 from worlds.AutoWorld import WebWorld, World
@@ -113,9 +113,12 @@ class RS64World(World):
                                  name=f"Launch {m['name']}")
 
             self._add_location(region, complete(m))
-            for tier in range(1, medal_tiers + 1):
+            # All three medal tiers are always checks; tiers above Medal Checks hold filler only.
+            for tier in (1, 2, 3):
                 loc = self._add_location(region, medal(m, tier))
-                if tier == 3:
+                if tier > medal_tiers:
+                    loc.progress_type = LocationProgressType.EXCLUDED
+                elif tier == 3:
                     self.set_rule(loc, gold_rule)
             if self.options.upgrade_pickups and m["pickup"]:
                 self._add_location(region, pickup(m))

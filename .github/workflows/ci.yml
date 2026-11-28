@@ -57,8 +57,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: OpenSSL (static, vcpkg)
-        run: vcpkg install openssl:x64-windows-static
+      - name: OpenSSL + zlib (static, vcpkg)
+        run: vcpkg install openssl:x64-windows-static zlib:x64-windows-static
 
       - name: Build client
         run: |

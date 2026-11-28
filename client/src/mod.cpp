@@ -86,7 +86,8 @@ struct Session {
     bool dirty = false;
     int pending_bind_slot = -1;    // CONNECT pressed for this pilot
     std::string error;             // shown instead of the net status
-    bool auto_connect_tried = false;
+    bool continue_requested = false;  // CONNECT pressed (or auto-reconnect) on this visit of the ARCHIPELAGO page
+    bool auto_connect_tried = false;  // auto-reconnect considered on this visit
 
     // Derived from file.items
     bool passes[d::kMissionCount] = {};
@@ -98,6 +99,7 @@ struct Session {
 
     // From the server
     bool connected = false;
+    bool goal_reported = false;    // goal sent on this connection
     std::set<int64_t> slot_locations;
     int goal = 0;
     int missions_required = 19;
@@ -110,6 +112,7 @@ struct Session {
     uint32_t level_mask[d::kMissionCount] = {};   // hangar mask per level, from the game (0 = unknown)
     bool masks_logged = false;
     int confirmed_level = -1;
+    int hangar_logged = -1;        // level whose hangar mask was last logged
     uint32_t status_buf = 0;
     std::string ms_shown, cs_shown;
     int medal_scan_cool = 0;
@@ -193,6 +196,21 @@ std::string pilot_path(int slot) {
     return std::string(dir) + "pilot_" + std::to_string(slot) + ".json";
 }
 
+// Medal sources as last seen, to log every change (where and when the game writes a medal is still unconfirmed).
+int g_seen_saved[d::kMissionCount] = {}, g_seen_live[d::kMissionCount] = {};
+
+// The pilot in a save slot, as the game identifies it: its ID and initials.
+int pilot_id(const uint8_t* rdram, int slot) { return rb(rdram, a::account(slot) + a::kAcctPilotId); }
+std::string pilot_name(const uint8_t* rdram, int slot) {
+    std::string n;
+    for (uint32_t i = 0; i < 4; ++i) {
+        const char c = (char)rb(rdram, a::account(slot) + a::kAcctName + i);
+        if (!c) break;
+        n += c;
+    }
+    return n;
+}
+
 // The pilot on the account screen changed: load its file, if it has one. A connection made for another pilot ends.
 void on_pilot(int slot) {
     save_file();
@@ -204,7 +222,10 @@ void on_pilot(int slot) {
     S.bound = false;
     S.file = PilotFile{};
     S.file_path = slot >= 0 ? pilot_path(slot) : std::string();
+    S.continue_requested = false;
     S.auto_connect_tried = false;
+    std::fill(std::begin(g_seen_saved), std::end(g_seen_saved), -1);
+    std::fill(std::begin(g_seen_live), std::end(g_seen_live), -1);
     if (!S.file_path.empty() && S.file.load(S.file_path)) {
         S.bound = true;
         logf("pilot %d is bound to seed %s (slot %s)", slot + 1, S.file.seed.c_str(), S.file.slot_name.c_str());
@@ -221,7 +242,7 @@ void queue_location(int64_t id) {
 }
 
 void check_goal() {
-    if (!S.connected || S.file.goal_sent) return;
+    if (!S.connected || S.goal_reported) return;
     bool done = false;
     if (S.goal == 1) {
         int n = 0;
@@ -231,10 +252,11 @@ void check_goal() {
         done = S.file.sent.count(d::location_id(15, d::kSlotComplete)) != 0;
     }
     if (done) {
-        g_net.send_goal();
+        g_net.send_goal();  // every connection: a re-hosted room needs it too
+        S.goal_reported = true;
+        if (!S.file.goal_sent) message("Goal complete!");
         S.file.goal_sent = true;
         S.dirty = true;
-        message("Goal complete!");
     }
 }
 
@@ -253,17 +275,45 @@ void flush_locations() {
     check_goal();
 }
 
+// Best medal for a level: the live array the debrief writes, or the pilot's saved record, whichever is better.
+int best_medal(const uint8_t* rdram, int level) {
+    const uint32_t acct = a::account(S.pilot_slot);
+    const int saved = (rb(rdram, acct + a::kAcctMedals + (uint32_t)(level >> 2)) >> ((level & 3) * 2)) & 3;
+    const int live = rb(rdram, a::kBestMedals + (uint32_t)level);
+    return std::max(saved, live <= 3 ? live : 0);
+}
+
+
+void log_medal_changes(const uint8_t* rdram, const char* where) {
+    if (S.pilot_slot < 0) return;
+    const uint32_t acct = a::account(S.pilot_slot);
+    for (int lv = 0; lv < d::kMissionCount; ++lv) {
+        const int saved = (rb(rdram, acct + a::kAcctMedals + (uint32_t)(lv >> 2)) >> ((lv & 3) * 2)) & 3;
+        const int live = rb(rdram, a::kBestMedals + (uint32_t)lv);
+        if (g_seen_saved[lv] < 0) {  // first look at this pilot: just remember
+            g_seen_saved[lv] = saved;
+            g_seen_live[lv] = live;
+        } else if (saved != g_seen_saved[lv] || live != g_seen_live[lv]) {
+            logf("probe medal %s level=%d saved=%d->%d live=%d->%d", where, lv, g_seen_saved[lv], saved, g_seen_live[lv], live);
+            g_seen_saved[lv] = saved;
+            g_seen_live[lv] = live;
+        }
+    }
+}
+
+// A medal sends its own tier and every tier below it (all three always exist; the apworld puts filler in the tiers
+// above the seed's Medal Checks). Any medal also means the mission was completed.
 void scan_medals(const uint8_t* rdram, int level) {
     if (!owned_level(level)) return;
-    const uint32_t acct = a::account(S.pilot_slot);
-    const int medal = (rb(rdram, acct + a::kAcctMedals + (uint32_t)(level >> 2)) >> ((level & 3) * 2)) & 3;
-    const int tiers = S.connected ? std::min(medal, S.medal_checks) : medal;
-    for (int t = 1; t <= tiers; ++t) queue_location(d::location_id(level, t));
+    const int medal = best_medal(rdram, level);
+    if (medal <= 0) return;
+    queue_location(d::location_id(level, d::kSlotComplete));
+    for (int t = 1; t <= medal; ++t) queue_location(d::location_id(level, t));
 }
 
 // ---- network events --------------------------------------------------------------------------------------------
 
-void bind_or_verify(const ConnectedInfo& info) {
+void bind_or_verify(const uint8_t* rdram, const ConnectedInfo& info) {
     const int slot = S.pending_bind_slot >= 0 ? S.pending_bind_slot : S.pilot_slot;
     S.pending_bind_slot = -1;
     if (slot < 0) {
@@ -287,12 +337,16 @@ void bind_or_verify(const ConnectedInfo& info) {
         S.bound = true;
         logf("pilot %d bound to seed %s", slot + 1, info.seed.c_str());
     }
+    if (S.file.pilot_id < 0) {
+        S.file.pilot_id = pilot_id(rdram, slot);
+        S.file.pilot_name = pilot_name(rdram, slot);
+    }
     S.file.slot_name = config("slot").empty() ? S.file.slot_name : config("slot");
     S.file.server = config("server").empty() ? S.file.server : config("server");
     S.dirty = true;
 }
 
-void on_connected(ConnectedInfo info) {
+void on_connected(const uint8_t* rdram, ConnectedInfo info) {
     const auto& sd = info.slot_data;
     const std::string wv = sd.value("world_version", std::string("0.0.0"));
     if (wv.substr(0, wv.find('.')) != std::string(d::kWorldVersion).substr(0, std::string(d::kWorldVersion).find('.'))) {
@@ -301,13 +355,21 @@ void on_connected(ConnectedInfo info) {
         return;
     }
     S.error.clear();
-    bind_or_verify(info);
+    bind_or_verify(rdram, info);
     if (!S.error.empty()) return;
 
     S.connected = true;
     S.slot_locations = info.checked;
     S.slot_locations.insert(info.missing.begin(), info.missing.end());
-    S.file.sent.insert(info.checked.begin(), info.checked.end());
+    // The server is the truth for what is checked. Checks this pilot made that the room doesn't have (a re-hosted
+    // seed, or sends lost in a crash) go out again.
+    int resend = 0;
+    for (int64_t id : S.file.sent) {
+        if (!info.checked.count(id) && S.slot_locations.count(id) && S.file.unsent.insert(id).second) ++resend;
+    }
+    if (resend) logf("re-sending %d check(s) this room doesn't have", resend);
+    S.file.sent = info.checked;
+    S.goal_reported = false;
     S.goal = sd.value("goal", 0);
     S.missions_required = sd.value("missions_required", 19);
     S.medal_checks = sd.value("medal_checks", 3);
@@ -321,7 +383,12 @@ void on_connected(ConnectedInfo info) {
 
 void on_items(const std::vector<ReceivedItem>& items) {
     for (const auto& it : items) {
-        if (it.index >= 0 && (size_t)it.index < S.file.items.size()) continue;  // already applied (reconnect resync)
+        if (it.index >= 0 && (size_t)it.index < S.file.items.size()) {
+            if (S.file.items[(size_t)it.index] == it.item) continue;  // already applied (reconnect resync)
+            // A different item at this index: another room for the same seed. Its list wins from here on.
+            logf("item %d differs from this pilot's file: resyncing from there", it.index);
+            S.file.items.resize((size_t)it.index);
+        }
         S.file.items.push_back(it.item);
         if (filler_of(it.item)) S.file.filler_queue.push_back(it.item);
         message("Received " + item_name(it.item) + " from " + it.sender);
@@ -331,11 +398,28 @@ void on_items(const std::vector<ReceivedItem>& items) {
     save_file();
 }
 
-void pump() {
+// A bound pilot deleted and recreated in the same slot is a new pilot: its file is set aside, the binding dropped.
+void check_pilot_identity(const uint8_t* rdram) {
+    if (!S.bound || S.pilot_slot < 0 || S.file.pilot_id < 0) return;
+    const int id = pilot_id(rdram, S.pilot_slot);
+    const std::string name = pilot_name(rdram, S.pilot_slot);
+    if (id == S.file.pilot_id && name == S.file.pilot_name) return;
+    logf("pilot %d is now %s (id %d), not %s (id %d): unbinding", S.pilot_slot + 1, name.c_str(), id,
+         S.file.pilot_name.c_str(), S.file.pilot_id);
+    g_net.disconnect();
+    S.connected = false;
+    const std::string backup = S.file_path + "." + S.file.seed + ".bak";
+    std::remove(backup.c_str());
+    std::rename(S.file_path.c_str(), backup.c_str());
+    on_pilot(S.pilot_slot);
+}
+
+void pump(const uint8_t* rdram) {
     if (const int slot = g_api->save_slot(); slot != S.pilot_slot) on_pilot(slot);
+    check_pilot_identity(rdram);
 
     ConnectedInfo info;
-    if (g_net.take_connected(info)) on_connected(std::move(info));
+    if (g_net.take_connected(info)) on_connected(rdram, std::move(info));
     if (g_net.state() != NetState::SlotConnected) S.connected = false;
 
     if (S.connected || S.bound) {
@@ -399,13 +483,23 @@ void show_status(uint8_t* rdram, void* ctx, uint32_t slot, int y, const std::str
     *shown = text;
 }
 
+// Ships the seed's logic counts for a level: the default ship, plus the replay ships under ship_logic any_listed.
+// The hangar offers only these (owned ones), so a mission is never launched in a ship that can't win it.
+uint32_t logic_ships(int level) {
+    return d::kDefaultShip[level] | (S.ship_logic == 1 ? d::kReplayShips[level] : 0u);
+}
+
+// The furthest mission the player holds a pass for: SELECT LEVEL lists entries 0..this.
+int furthest_pass() {
+    int far = -1;
+    for (int i = 0; i < d::kMissionCount; ++i) if (S.passes[i]) far = i;
+    return far;
+}
+
 const char* lock_reason(int level) {
     if (level < 0 || level >= d::kMissionCount) return nullptr;
     if (!S.passes[level]) return "NO MISSION PASS";
-    // The game's own hangar list for the level when known, else the data table under the seed's Ship Logic.
-    const uint32_t table = d::kDefaultShip[level] | (S.ship_logic == 1 ? d::kReplayShips[level] : 0u);
-    const uint32_t mask = S.level_mask[level] ? S.level_mask[level] : table;
-    if (!(mask & S.ships)) return "NO SHIP FOR THIS MISSION";
+    if (!(logic_ships(level) & S.ships)) return "NO SHIP FOR THIS MISSION";
     return nullptr;
 }
 
@@ -414,8 +508,8 @@ const char* lock_reason(int level) {
 void apply_leniency(uint8_t* rdram, int level);
 void restore_medal_table(uint8_t* rdram);
 
-int on_frame(uint32_t, uint8_t*, void*, void*) {
-    pump();
+int on_frame(uint32_t, uint8_t* rdram, void*, void*) {
+    pump(rdram);
     return RS64_HOOK_CONTINUE;
 }
 
@@ -429,7 +523,8 @@ int on_menu_frame(uint32_t, uint8_t* rdram, void*, void*) {
     }
     if (--S.medal_scan_cool <= 0) {
         S.medal_scan_cool = 30;
-        if (S.last_played >= 0) scan_medals(rdram, S.last_played);
+        log_medal_changes(rdram, "menu");
+        for (int lv = 0; lv < d::kMissionCount; ++lv) scan_medals(rdram, lv);
         save_file();
     }
     return RS64_HOOK_CONTINUE;
@@ -619,10 +714,13 @@ int on_result_fail(uint32_t, uint8_t*, void*, void*) {
     return RS64_HOOK_CONTINUE;
 }
 
-int on_mission_end(uint32_t, uint8_t*, void*, void*) {
+int on_mission_end(uint32_t, uint8_t* rdram, void*, void*) {
     if (active() && owned_level(S.level) && S.leniency[S.level]) S.leniency_pending = S.level;
     S.invincible_until = 0.0f;
-    if (S.pending_complete && active()) {
+    // Success either through the success request (RESULT_SUCCESS) or a result the level script wrote directly.
+    const uint8_t result = rb(rdram, a::kMissionResult);
+    logf("mission %d ended: result %u, success request %s", S.level, result, S.pending_complete ? "yes" : "no");
+    if ((S.pending_complete || result == 1) && active() && owned_level(S.level)) {
         queue_location(d::location_id(S.level, d::kSlotComplete));
         logf("mission %d complete", S.level);
     }
@@ -645,8 +743,16 @@ int on_powerup_collect(uint32_t, uint8_t* rdram, void* ctx, void*) {
 
 int on_mission_select_init(uint32_t, uint8_t* rdram, void* ctx, void*) {
     restore_medal_table(rdram);
+    S.continue_requested = false;
+    S.auto_connect_tried = false;
     if (!active()) return RS64_HOOK_CONTINUE;
     enforce_menus(rdram);
+    // a2 = highest level the screen lists (from the pilot's progress as loaded, not the account we rewrite): list up
+    // to the furthest owned pass, as the co-op lobby does for its pick. Locked entries in between can't be confirmed.
+    const int far = furthest_pass();
+    const uint32_t asked = (uint32_t)regs(ctx)->r[kA2];
+    if (far >= 0 && asked < (uint32_t)far) regs(ctx)->r[kA2] = (uint64_t)far;
+    logf("mission select: game lists up to level %u, furthest pass %d", asked, far);
     std::string line = "probe craft masks consider/ignore:";
     for (int lv = 0; lv < d::kMissionCount; ++lv) {
         const uint32_t consider = call(rdram, ctx, a::kFnCraftMaskConsiderUnlocks, {(uint32_t)lv});
@@ -663,6 +769,14 @@ int on_mission_select_init(uint32_t, uint8_t* rdram, void* ctx, void*) {
     return RS64_HOOK_CONTINUE;
 }
 
+// The debrief's continue check runs every debrief frame: by then the medal is decided.
+int on_debrief_pad(uint32_t, uint8_t* rdram, void*, void*) {
+    if (!active()) return RS64_HOOK_CONTINUE;
+    log_medal_changes(rdram, "debrief");
+    if (S.last_played >= 0) scan_medals(rdram, S.last_played);
+    return RS64_HOOK_CONTINUE;
+}
+
 int on_mission_select_fonts(uint32_t, uint8_t*, void* ctx, void*) {
     if (!active()) return RS64_HOOK_CONTINUE;
     if (regs(ctx)->r[kA2] < 3) regs(ctx)->r[kA2] = 3;
@@ -672,6 +786,9 @@ int on_mission_select_fonts(uint32_t, uint8_t*, void* ctx, void*) {
 
 int on_mission_select_tick(uint32_t, uint8_t* rdram, void* ctx, void*) {
     if (!active()) return RS64_HOOK_CONTINUE;
+    // Let the cursor reach every listed entry up to the furthest pass.
+    if (const int far = furthest_pass(); far >= 0)
+        ww(rdram, a::kMsUnlocked, rw(rdram, a::kMsUnlocked) | ((far >= 31) ? 0xFFFFFFFFu : ((2u << far) - 1u)));
     const int cursor = rb(rdram, a::kMsCursor);
     const char* why = lock_reason(cursor);
     if (why) {
@@ -689,6 +806,7 @@ int on_mission_confirmed(uint32_t, uint8_t*, void* ctx, void*) {
 }
 
 int on_craft_select_init(uint32_t, uint8_t*, void* ctx, void*) {
+    S.hangar_logged = -1;
     if (!active()) return RS64_HOOK_CONTINUE;
     if (regs(ctx)->r[kA2] < 4) regs(ctx)->r[kA2] = 4;
     S.cs_shown = "\x01";
@@ -699,7 +817,18 @@ int on_craft_select_tick(uint32_t, uint8_t* rdram, void* ctx, void*) {
     if (!active()) return RS64_HOOK_CONTINUE;
     const int level = S.confirmed_level >= 0 ? S.confirmed_level : rb(rdram, a::kCurrentLevel);
     if (level < 0 || level >= d::kMissionCount) return RS64_HOOK_CONTINUE;
-    const uint32_t allowed = owned_level(level) ? (rw(rdram, a::kHangarAllowed) & S.ships) : 0u;
+    // The carousel stops on the Falcon and the N-1 only when their hangar unlock bytes are set; the N-1's key alone
+    // doesn't set its byte. Owned replay ships join the game's own list (the N-1 is missing from it otherwise).
+    wb(rdram, a::kHangarFalconUnlocked, (S.ships & (1u << 5)) ? 1 : 0);
+    wb(rdram, a::kHangarNabooUnlocked, (S.ships & (1u << 8)) ? 1 : 0);
+    const uint32_t want = logic_ships(level) & S.ships;
+    const uint32_t offered = rw(rdram, a::kHangarAllowed) | want;
+    const uint32_t allowed = owned_level(level) ? (offered & want) : 0u;
+    if (S.hangar_logged != level) {
+        logf("probe hangar level=%d game allows 0x%X, owned 0x%X, launchable 0x%X", level, rw(rdram, a::kHangarAllowed),
+             S.ships, allowed);
+        S.hangar_logged = level;
+    }
     ww(rdram, a::kHangarAllowed, allowed);
     if (!allowed) {
         const uint32_t pressed = a::kPressedWords + 4u * rb(rdram, a::kHangarPort);
@@ -737,6 +866,8 @@ void action_connect(void*) {
         return;
     }
     S.error.clear();
+    S.continue_requested = true;
+    if (S.connected && S.bound && S.pilot_slot == slot) return;  // already connected: just continue
     S.pending_bind_slot = slot;
     g_net.connect(c);
 }
@@ -755,17 +886,27 @@ void action_unbind(void*) {
     S.error = "PILOT UNBOUND";
 }
 
+// Polled while the ARCHIPELAGO page is up. A bound pilot reconnects and continues on its own only when the server in
+// the settings is the one it last played on; any other server (a new room) waits for CONNECT, so FORGET PILOT SEED
+// stays reachable. Mission select clears the request.
 int condition_ready(void*) {
-    // Polled while the ARCHIPELAGO page is up: a bound pilot reconnects on its own.
-    if (S.bound && !S.auto_connect_tried && g_net.state() == NetState::Idle && S.error.empty()) {
+    if (S.bound && !S.auto_connect_tried && S.error.empty()) {
         S.auto_connect_tried = true;
         const ConnectConfig c = make_config();
-        if (!c.server.empty() && !c.slot.empty()) {
-            S.pending_bind_slot = S.pilot_slot;
-            g_net.connect(c);
+        const bool same_server = !c.server.empty() && c.server == S.file.server &&
+                                 (S.file.slot_name.empty() || c.slot == S.file.slot_name);
+        if (same_server) {
+            S.continue_requested = true;
+            if (!(S.connected && S.pilot_slot == g_api->save_slot()) && g_net.state() == NetState::Idle) {
+                S.pending_bind_slot = S.pilot_slot;
+                g_net.connect(c);
+            }
+        } else {
+            logf("pilot %d last played on %s, settings say %s: waiting for CONNECT", S.pilot_slot + 1,
+                 S.file.server.c_str(), c.server.c_str());
         }
     }
-    return S.connected && S.bound && S.pilot_slot == g_api->save_slot() ? 1 : 0;
+    return S.continue_requested && S.connected && S.bound && S.pilot_slot == g_api->save_slot() ? 1 : 0;
 }
 
 const char* text_status(void*) {
@@ -817,6 +958,7 @@ MOD_EXPORT void rs64_mod_init(uint8_t* rdram, void* ctx) {
     g_api->add_hook(RS64_HOOK_PLAYER_DAMAGE, on_player_damage, nullptr);
     g_api->add_hook(RS64_HOOK_MISSION_SELECT_INIT, on_mission_select_init, nullptr);
     g_api->add_hook(RS64_HOOK_MISSION_SELECT_FONTS, on_mission_select_fonts, nullptr);
+    g_api->add_hook(RS64_HOOK_DEBRIEF_PAD, on_debrief_pad, nullptr);
     g_api->add_hook(RS64_HOOK_MISSION_SELECT_TICK, on_mission_select_tick, nullptr);
     g_api->add_hook(RS64_HOOK_MISSION_CONFIRMED, on_mission_confirmed, nullptr);
     g_api->add_hook(RS64_HOOK_CRAFT_SELECT_INIT, on_craft_select_init, nullptr);

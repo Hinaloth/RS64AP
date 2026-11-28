@@ -20,15 +20,20 @@ constexpr uint32_t kSecondaryMax = 0x80130B13u;   // u8
 constexpr uint32_t kObjectivesDone = 0x80130B15u; // u8 completedObjectiveFlags
 constexpr uint32_t kObjectivesHidden = 0x80130B16u;
 constexpr uint32_t kObjectiveCount = 0x80130B17u; // u8 numMissionObjectives
+constexpr uint32_t kMissionResult = 0x80130B14u;  // u8 at mission end: 1 success, 2 failure, 3 abort/game over.
+                                                  // Scripted ends write it directly, skipping the success hook.
 constexpr uint32_t kActiveUnlocks = 0x80130B18u;  // u32, mirrors kSettingsWord bits 9..22
+constexpr uint32_t kBestMedals = 0x80130B1Cu;     // u8[level]: live best medal (0-3), what the debrief compares against
 
 // Save body 0x8013A5C0 / pilots
 constexpr uint32_t kSaveNabooKey = 0x8013A5C0u + 0xACu;
 constexpr uint32_t kAccounts = 0x8013A5D4u;       // account_data[3], stride 0x14
 constexpr uint32_t kAccountStride = 0x14u;
+constexpr uint32_t kAcctName = 0x00u;             // char[4], null-terminated initials
 constexpr uint32_t kAcctCurrentLevel = 0x05u;     // u8
 constexpr uint32_t kAcctMedals = 0x06u;           // 2 bits per level: byte 0x06 + (level >> 2), shift (level & 3) * 2
 constexpr uint32_t kAcctUnlockWord = 0x0Cu;       // u32, upgrades + level/craft unlocks
+constexpr uint32_t kAcctPilotId = 0x10u;          // u8, the pilot's ID (1-254) given when it is created
 
 // Masks
 constexpr uint32_t kUpgradeMask = 0x0001FE00u;
@@ -68,6 +73,9 @@ constexpr uint32_t kMedalLevelStride = 0x24u;     // three 0xC records per level
 // Menu overlay: hangar (craft select)
 constexpr uint32_t kHangarPort = 0x800CD6D0u;     // u8
 constexpr uint32_t kHangarAllowed = 0x800CD6D8u;  // u32, bit n = craft n may launch  SPIKE S3
+// u8 each: the carousel skips the Falcon's and the N-1's stops while these are 0 (src/game/mod_content/hangar_ships.cpp)
+constexpr uint32_t kHangarFalconUnlocked = 0x800CD6CDu;
+constexpr uint32_t kHangarNabooUnlocked = 0x800CD6CFu;
 
 // Pads
 constexpr uint32_t kPressedWords = 0x8013A960u;   // u32 per port: buttons pressed this frame
