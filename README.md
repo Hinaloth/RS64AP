@@ -66,7 +66,7 @@ Canyon (T-16).
 - "Ship" unlocks the ship it's named after. These items are marked as Progression, except for ships no mission needs
   under your ship logic (with `default_only`: the Millennium Falcon, TIE Interceptor and Naboo N-1), which are
   marked as Useful.
-- "Upgrades" give you one of the upgrades of the game. These items are marked as Useful as they give a real boost. To note: this
+- "Upgrades" give you one of the upgrades of the game. These items are marked as Useful. To note: this
   AP introduces a new upgrade, the "Replenishing Secondaries", which allows you to regain a secondary ammo every 15
   seconds.
 - "Medal Leniency" is another new item, a filler, one per mission, that makes the named mission's medal requirements
